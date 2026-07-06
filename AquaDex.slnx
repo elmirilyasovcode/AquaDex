@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="AquaDex.Api/AquaDex.Api.csproj" />
+  <Project Path="AquaDex.Core/AquaDex.Core.csproj" />
+  <Project Path="AquaDex.Infrastructure/AquaDex.Infrastructure.csproj" />
+</Solution>
