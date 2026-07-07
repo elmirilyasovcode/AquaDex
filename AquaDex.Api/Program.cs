@@ -1,3 +1,5 @@
+using AquaDex.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace AquaDex.Api
 {
@@ -12,6 +14,9 @@ namespace AquaDex.Api
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
+
+            builder.Services.AddDbContext<AquaDexDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             var app = builder.Build();
 
