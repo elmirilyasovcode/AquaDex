@@ -24,6 +24,10 @@ namespace AquaDex.Api
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                app.UseSwaggerUI(options =>
+                {
+                    options.SwaggerEndpoint("/openapi/v1.json", "AquaDex API v1");
+                });
             }
 
             app.UseHttpsRedirection();
