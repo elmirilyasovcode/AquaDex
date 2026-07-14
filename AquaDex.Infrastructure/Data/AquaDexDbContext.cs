@@ -14,6 +14,7 @@ public class AquaDexDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Species> Species { get; set; } = null!;
     public DbSet<Waterbody> Waterbodies { get; set; } = null!;
     public DbSet<SpeciesWaterbody> SpeciesWaterbodies { get; set; } = null!;
+    public DbSet<CatchLog> CatchLogs { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -34,5 +35,17 @@ public class AquaDexDbContext : IdentityDbContext<ApplicationUser>
         modelBuilder.Entity<SpeciesWaterbody>()
             .HasIndex(sw => new { sw.SpeciesId, sw.WaterbodyId })
             .IsUnique();
+
+        modelBuilder.Entity<CatchLog>()
+            .HasOne(c => c.User)
+            .WithMany()
+            .HasForeignKey(c => c.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CatchLog>()
+            .HasOne(c => c.Species)
+            .WithMany()
+            .HasForeignKey(c => c.SpeciesId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

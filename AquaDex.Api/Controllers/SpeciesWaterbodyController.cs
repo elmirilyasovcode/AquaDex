@@ -1,6 +1,7 @@
 ﻿using AquaDex.Core.DTOs;
 using AquaDex.Core.Entities;
 using AquaDex.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -89,6 +90,7 @@ public class SpeciesWaterbodyController : ControllerBase
 
     // POST: api/specieswaterbody
     [HttpPost]
+    [Authorize(Roles = "VerifiedExpert,Admin")]
     public async Task<ActionResult<SpeciesWaterbodyDto>> CreateLink(CreateSpeciesWaterbodyDto dto)
     {
         // Validate both FKs actually exist before inserting —

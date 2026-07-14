@@ -1,6 +1,7 @@
 ﻿using AquaDex.Core.DTOs;
 using AquaDex.Core.Entities;
 using AquaDex.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -56,6 +57,7 @@ public class WaterbodyController : ControllerBase
 
     // POST: api/waterbody
     [HttpPost]
+    [Authorize(Roles = "VerifiedExpert,Admin")]
     public async Task<ActionResult<WaterbodyDto>> CreateWaterbody(CreateWaterbodyDto dto)
     {
         var waterbody = new Waterbody

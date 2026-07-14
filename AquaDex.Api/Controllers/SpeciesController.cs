@@ -2,6 +2,7 @@
 using AquaDex.Core.Entities;
 using AquaDex.Core.Enums;
 using AquaDex.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,7 @@ namespace AquaDex.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+
 public class SpeciesController : ControllerBase
 {
     private readonly AquaDexDbContext _context;
@@ -73,6 +75,7 @@ public class SpeciesController : ControllerBase
 
     // POST: api/species
     [HttpPost]
+    [Authorize(Roles = "VerifiedExpert,Admin")]
     public async Task<ActionResult<SpeciesDto>> CreateSpecies(CreateSpeciesDto dto)
     {
         var species = new Species
