@@ -21,4 +21,5 @@ public class CatchLogDto
     public DateTime CaughtAt { get; set; }
     public DateTime CreatedAt { get; set; }
     public string? Notes { get; set; }
+    public bool IsProtectedSpeciesCatch { get; set; }
 }

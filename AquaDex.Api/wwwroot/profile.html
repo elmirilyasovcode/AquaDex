@@ -1,0 +1,78 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AquaDex — Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css">
+</head>
+<body>
+    <header id="site-header"></header>
+
+    <div class="page-wrap">
+        <div id="profile-content">
+            <p style="font-family: var(--font-mono); color: var(--text-dim);">Loading profile...</p>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/shared-header.js"></script>
+    <script>
+        renderHeader('profile.html');
+
+        (async () => {
+            const content = document.getElementById('profile-content');
+
+            try {
+                const user = await apiRequest('/auth/me');
+                const myCatches = await apiRequest('/catchlog/mine');
+                const discoveredIds = await apiRequest('/catchlog/my-discovered-species');
+                const allSpecies = await apiRequest('/species');
+
+                const codexPercent = allSpecies.length > 0
+                    ? Math.round((discoveredIds.length / allSpecies.length) * 100)
+                    : 0;
+
+                content.innerHTML = `
+              <h1>${user.displayName}</h1>
+              <p class="subtitle">${user.roles.join(' · ')}</p>
+
+              <div class="profile-stat-grid">
+                <div class="profile-stat">
+                  <div class="profile-stat-num">${myCatches.length}</div>
+                  <div class="profile-stat-label">Total Catches</div>
+                </div>
+                <div class="profile-stat">
+                  <div class="profile-stat-num">${discoveredIds.length}</div>
+                  <div class="profile-stat-label">Species Discovered</div>
+                </div>
+                <div class="profile-stat">
+                  <div class="profile-stat-num">${codexPercent}%</div>
+                  <div class="profile-stat-label">Codex Complete</div>
+                </div>
+              </div>
+
+              <div class="hud-panel">
+                <h2 style="font-size: 1rem; margin-bottom: 16px;">Recent Catches</h2>
+                <div class="feed-list">
+                  ${myCatches.length > 0 ? myCatches.slice(0, 5).map(c => `
+                    <div class="feed-card">
+                      <div class="feed-card-main">
+                        <div class="feed-card-species">${c.speciesCommonNameEn}</div>
+                        <div class="feed-card-meta">
+                          ${c.weightKg ? `<span>${c.weightKg} kg</span>` : ''}
+                          <span>${new Date(c.caughtAt).toLocaleDateString('en-GB')}</span>
+                        </div>
+                      </div>
+                    </div>
+                  `).join('') : '<p style="color: var(--text-dim); font-size: 0.85rem;">No catches logged yet.</p>'}
+                </div>
+              </div>
+            `;
+            } catch {
+                content.innerHTML = `<div class="msg-box msg-error">You must be logged in to view your profile. <a href="login.html">Sign in</a></div>`;
+            }
+        })();
+    </script>
+</body>
+</html>

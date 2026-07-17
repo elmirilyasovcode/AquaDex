@@ -1,0 +1,49 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AquaDex</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css">
+</head>
+<body>
+    <div class="container">
+        <header id="site-header"></header>
+        <div class="page-wrap">
+            <h1>AquaDex</h1>
+            <p class="subtitle">System Online</p>
+            <div class="hud-panel" style="max-width: 480px;">
+                <p id="welcome-msg" style="font-family: var(--font-mono);">Checking access status...</p>
+            </div>
+        </div>
+
+        <script src="js/api.js"></script>
+        <script src="js/shared-header.js"></script>
+        <script>
+            renderHeader('index.html');
+            (async () => {
+                const el = document.getElementById('welcome-msg');
+                try {
+                    const user = await apiRequest('/auth/me');
+                    el.innerHTML = `Authenticated as <strong>${user.displayName}</strong> (${user.roles.join(', ')})`;
+                } catch {
+                    el.innerHTML = `Not authenticated. <a href="login.html">Sign in</a> or <a href="register.html">Register</a>.`;
+                }
+            })();
+        </script>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+    (async () => {
+      const el = document.getElementById('welcome-msg');
+      try {
+        const user = await apiRequest('/auth/me');
+        el.innerHTML = `Authenticated as <strong>${user.displayName}</strong> (${user.roles.join(', ')})`;
+      } catch {
+        el.innerHTML = `Not authenticated. <a href="login.html">Sign in</a> or <a href="register.html">Register</a>.`;
+      }
+    })();
+    </script>
+</body>
+</html>

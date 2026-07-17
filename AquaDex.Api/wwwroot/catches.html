@@ -1,0 +1,166 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AquaDex — Catch Log</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css">
+</head>
+<body>
+    <header id="site-header"></header>
+
+    <div class="page-wrap">
+        <h1>Catch Log</h1>
+        <p class="subtitle">Public Field Feed</p>
+
+        <button id="toggle-form-btn" class="btn toggle-panel-btn">+ Log a Catch</button>
+
+        <div id="log-form-panel" class="hud-panel" style="display: none; margin-bottom: 32px;">
+            <h2 style="font-size: 1.05rem; margin-bottom: 20px;">New Catch Entry</h2>
+            <div id="form-msg"></div>
+
+            <form id="catch-form">
+                <div class="form-grid">
+                    <div class="field-group full-width">
+                        <label for="speciesSelect">Species</label>
+                        <select id="speciesSelect" required></select>
+                    </div>
+                    <div class="field-group">
+                        <label for="weightKg">Weight (kg)</label>
+                        <input type="number" step="0.1" id="weightKg">
+                    </div>
+                    <div class="field-group">
+                        <label for="lengthCm">Length (cm)</label>
+                        <input type="number" step="0.1" id="lengthCm">
+                    </div>
+                    <div class="field-group">
+                        <label for="latitude">Latitude</label>
+                        <input type="number" step="0.0001" id="latitude" required>
+                    </div>
+                    <div class="field-group">
+                        <label for="longitude">Longitude</label>
+                        <input type="number" step="0.0001" id="longitude" required>
+                    </div>
+                    <div class="field-group">
+                        <label for="caughtAt">Date Caught</label>
+                        <input type="datetime-local" id="caughtAt" required>
+                    </div>
+                    <div class="field-group full-width">
+                        <label for="notes">Notes</label>
+                        <textarea id="notes" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <div class="checkbox-row">
+                    <input type="checkbox" id="shareExactLocation">
+                    <label for="shareExactLocation">Share exact location publicly (otherwise hidden from feed)</label>
+                </div>
+
+                <button type="submit" class="btn">Submit Catch</button>
+            </form>
+        </div>
+
+        <div id="feed-msg"></div>
+        <div id="feed-list" class="feed-list"></div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/shared-header.js"></script>
+    <script>
+        renderHeader('catches.html');
+
+        const toggleBtn = document.getElementById('toggle-form-btn');
+        const formPanel = document.getElementById('log-form-panel');
+
+        toggleBtn.addEventListener('click', async () => {
+            const isHidden = formPanel.style.display === 'none';
+            formPanel.style.display = isHidden ? 'block' : 'none';
+            if (isHidden) {
+                try {
+                    await apiRequest('/auth/me');
+                } catch {
+                    formPanel.innerHTML = `<div class="msg-box msg-error">You must be logged in to log a catch. <a href="login.html">Sign in</a></div>`;
+                }
+            }
+        });
+
+        async function loadSpeciesDropdown() {
+            const select = document.getElementById('speciesSelect');
+            const species = await apiRequest('/species');
+            select.innerHTML = species.map(s => `<option value="${s.id}">${s.commonNameEn}</option>`).join('');
+        }
+
+        function formatCoords(lat, lon) {
+            if (lat === null || lon === null) return 'Location hidden';
+            return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+        }
+
+        function timeAgo(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        async function loadFeed() {
+            const feedList = document.getElementById('feed-list');
+            const feedMsg = document.getElementById('feed-msg');
+            try {
+                const logs = await apiRequest('/catchlog');
+                if (logs.length === 0) {
+                    feedList.innerHTML = `<p style="color: var(--text-dim); font-family: var(--font-mono);">No catches logged yet.</p>`;
+                    return;
+                }
+
+                feedList.innerHTML = logs.map(log => `
+              <div class="feed-card">
+                <div class="feed-card-main">
+                  <div class="feed-card-species">${log.speciesCommonNameEn}</div>
+                  <div class="feed-card-user">Logged by ${log.userDisplayName}</div>
+                  ${log.notes ? `<div class="feed-card-notes">${log.notes}</div>` : ''}
+                  ${log.isProtectedSpeciesCatch ? `<span class="status-pill status-warning protected-badge">Protected Species</span>` : ''}
+                  <div class="feed-card-meta">
+                    ${log.weightKg ? `<span>${log.weightKg} kg</span>` : ''}
+                    ${log.lengthCm ? `<span>${log.lengthCm} cm</span>` : ''}
+                    <span>${formatCoords(log.latitude, log.longitude)}</span>
+                    <span>${timeAgo(log.caughtAt)}</span>
+                  </div>
+                </div>
+              </div>
+            `).join('');
+            } catch (err) {
+                feedMsg.innerHTML = `<div class="msg-box msg-error">Failed to load feed: ${err.message}</div>`;
+            }
+        }
+
+        document.getElementById('catch-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formMsg = document.getElementById('form-msg');
+            formMsg.innerHTML = '';
+
+            const payload = {
+                speciesId: parseInt(document.getElementById('speciesSelect').value),
+                weightKg: document.getElementById('weightKg').value ? parseFloat(document.getElementById('weightKg').value) : null,
+                lengthCm: document.getElementById('lengthCm').value ? parseFloat(document.getElementById('lengthCm').value) : null,
+                latitude: parseFloat(document.getElementById('latitude').value),
+                longitude: parseFloat(document.getElementById('longitude').value),
+                shareExactLocation: document.getElementById('shareExactLocation').checked,
+                caughtAt: new Date(document.getElementById('caughtAt').value).toISOString(),
+                notes: document.getElementById('notes').value || null
+            };
+
+            try {
+                await apiRequest('/catchlog', { method: 'POST', body: JSON.stringify(payload) });
+                formMsg.innerHTML = `<div class="msg-box msg-success">Catch logged successfully.</div>`;
+                document.getElementById('catch-form').reset();
+                await loadFeed();
+            } catch (err) {
+                formMsg.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
+            }
+        });
+
+        (async () => {
+            await loadSpeciesDropdown();
+            await loadFeed();
+        })();
+    </script>
+</body>
+</html>

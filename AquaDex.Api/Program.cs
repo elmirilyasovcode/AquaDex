@@ -37,7 +37,12 @@ namespace AquaDex.Api
             using (var scope = app.Services.CreateScope())
             {
                 await AquaDex.Infrastructure.Seed.RoleSeeder.SeedRolesAsync(scope.ServiceProvider);
+
+                var dbContext = scope.ServiceProvider.GetRequiredService<AquaDexDbContext>();
+                await AquaDex.Infrastructure.Seed.ForumCategorySeeder.SeedCategoriesAsync(dbContext);
             }
+
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -50,11 +55,10 @@ namespace AquaDex.Api
             }
 
             app.UseHttpsRedirection();
-
-            app.UseAuthentication();    
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
+            app.UseAuthentication();
             app.UseAuthorization();
-
-
             app.MapControllers();
 
 

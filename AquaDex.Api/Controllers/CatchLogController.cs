@@ -1,5 +1,6 @@
 ﻿using AquaDex.Core.DTOs;
 using AquaDex.Core.Entities;
+using AquaDex.Core.Enums;
 using AquaDex.Core.Helpers;
 using AquaDex.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -112,34 +113,47 @@ public class CatchLogController : ControllerBase
             ShareExactLocation = c.ShareExactLocation,
             CaughtAt = c.CaughtAt,
             CreatedAt = c.CreatedAt,
-            Notes = c.Notes
+            Notes = c.Notes,
+            IsProtectedSpeciesCatch = c.Species.ConservationStatus >= ConservationStatus.Vulnerable
         };
     }
     // GET: api/catchlog/nearby?latitude=40.4093&longitude=49.8671&radiusKm=25
     [HttpGet("nearby")]
     public async Task<ActionResult<IEnumerable<CatchLogDto>>> GetNearbyCatchLogs(
-        [FromQuery] double latitude,
-        [FromQuery] double longitude,
-        [FromQuery] double radiusKm = 25)
+    [FromQuery] double latitude,
+    [FromQuery] double longitude,
+    [FromQuery] double radiusKm = 25)
     {
-        // Pull candidates from the DB first, then filter by real distance in memory —
-        // Haversine involves trig functions EF Core can't translate into SQL, so this can't be done as a pure LINQ-to-SQL query.
-        var allLogs = await _context.CatchLogs
+        var candidates = await _context.CatchLogs
             .Include(c => c.User)
             .Include(c => c.Species)
             .Where(c => c.Latitude != null && c.Longitude != null && c.ShareExactLocation)
             .ToListAsync();
 
-        var nearby = allLogs
-            .Where(c => GeoHelper.CalculateDistanceKm(
-                latitude, longitude,
-                (double)c.Latitude!.Value, (double)c.Longitude!.Value) <= radiusKm)
-            .OrderBy(c => GeoHelper.CalculateDistanceKm(
-                latitude, longitude,
-                (double)c.Latitude!.Value, (double)c.Longitude!.Value))
-            .Select(c => MapToDto(c, forceShowLocation: true)) // already filtered to ShareExactLocation==true above, safe to show
-            .ToList();
+        var nearby = GeoHelper.FilterByRadius(
+            candidates,
+            latitude,
+            longitude,
+            radiusKm,
+            getLat: c => (double)c.Latitude!.Value,
+            getLon: c => (double)c.Longitude!.Value
+        );
 
-        return Ok(nearby);
+        return Ok(nearby.Select(c => MapToDto(c, forceShowLocation: true)).ToList());
+    }
+
+    [HttpGet("my-discovered-species")]
+    [Authorize]
+    public async Task<ActionResult<IEnumerable<int>>> GetMyDiscoveredSpeciesIds()
+    {
+        var userId = _userManager.GetUserId(User);
+
+        var speciesIds = await _context.CatchLogs
+            .Where(c => c.UserId == userId)
+            .Select(c => c.SpeciesId)
+            .Distinct()
+            .ToListAsync();
+
+        return Ok(speciesIds);
     }
 }

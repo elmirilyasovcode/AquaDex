@@ -4,6 +4,7 @@ using AquaDex.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AquaDex.Infrastructure.Migrations
 {
     [DbContext(typeof(AquaDexDbContext))]
-    partial class AquaDexDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260717111549_AddRuleViolationReports")]
+    partial class AddRuleViolationReports
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -92,45 +95,6 @@ namespace AquaDex.Infrastructure.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
-                });
-
-            modelBuilder.Entity("AquaDex.Core.Entities.BiteAlert", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal>("Latitude")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("Longitude")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Message")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("PostedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("PostedByUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int?>("SpeciesId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PostedByUserId");
-
-                    b.HasIndex("SpeciesId");
-
-                    b.ToTable("BiteAlerts");
                 });
 
             modelBuilder.Entity("AquaDex.Core.Entities.CatchLog", b =>
@@ -468,24 +432,6 @@ namespace AquaDex.Infrastructure.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("AquaDex.Core.Entities.BiteAlert", b =>
-                {
-                    b.HasOne("AquaDex.Core.Entities.ApplicationUser", "PostedByUser")
-                        .WithMany()
-                        .HasForeignKey("PostedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("AquaDex.Core.Entities.Species", "Species")
-                        .WithMany()
-                        .HasForeignKey("SpeciesId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("PostedByUser");
-
-                    b.Navigation("Species");
                 });
 
             modelBuilder.Entity("AquaDex.Core.Entities.CatchLog", b =>

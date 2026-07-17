@@ -1,13 +1,11 @@
-﻿namespace AquaDex.Core.Helpers;
+﻿using System.Linq.Expressions;
+
+namespace AquaDex.Core.Helpers;
 
 public static class GeoHelper
 {
     private const double EarthRadiusKm = 6371.0;
 
-    /// <summary>
-    /// Calculates the great-circle distance between two Lat/Lng points using the Haversine formula.
-    /// Returns distance in kilometers.
-    /// </summary>
     public static double CalculateDistanceKm(double lat1, double lon1, double lat2, double lon2)
     {
         var dLat = DegreesToRadians(lat2 - lat1);
@@ -23,4 +21,28 @@ public static class GeoHelper
     }
 
     private static double DegreesToRadians(double degrees) => degrees * (Math.PI / 180.0);
+
+    /// <summary>
+    /// Filters a list of items to those within radiusKm of a given point, sorted nearest-first.
+    /// getLat/getLon extract coordinates from each item (as double).
+    /// </summary>
+    public static List<T> FilterByRadius<T>(
+        IEnumerable<T> items,
+        double centerLat,
+        double centerLon,
+        double radiusKm,
+        Func<T, double> getLat,
+        Func<T, double> getLon)
+    {
+        return items
+            .Select(item => new
+            {
+                Item = item,
+                Distance = CalculateDistanceKm(centerLat, centerLon, getLat(item), getLon(item))
+            })
+            .Where(x => x.Distance <= radiusKm)
+            .OrderBy(x => x.Distance)
+            .Select(x => x.Item)
+            .ToList();
+    }
 }

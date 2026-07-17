@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AquaDex — Waterbodies</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css">
+</head>
+<body>
+    <header id="site-header"></header>
+
+    <div class="page-wrap">
+        <h1>Waterbodies</h1>
+        <p class="subtitle">Known Fishing Locations</p>
+
+        <div id="msg-container"></div>
+        <div id="waterbody-grid" class="waterbody-grid"></div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/shared-header.js"></script>
+    <script>
+        renderHeader('waterbodies.html');
+
+        function abundanceDots(rating) {
+            let dots = '';
+            for (let i = 1; i <= 5; i++) {
+                dots += `<span class="${i <= rating ? 'filled' : ''}">●</span>`;
+            }
+            return `<span class="abundance-dots">${dots}</span>`;
+        }
+
+        (async () => {
+            const grid = document.getElementById('waterbody-grid');
+            const msgContainer = document.getElementById('msg-container');
+
+            try {
+                const waterbodies = await apiRequest('/waterbody');
+
+                const cards = await Promise.all(waterbodies.map(async (wb) => {
+                    let speciesLinks = [];
+                    try {
+                        speciesLinks = await apiRequest(`/specieswaterbody/by-waterbody/${wb.id}`);
+                    } catch {
+                        speciesLinks = [];
+                    }
+
+                    const speciesHtml = speciesLinks.length > 0
+                        ? speciesLinks.map(link => `
+                    <div class="waterbody-species-item">
+                      <span>${link.speciesCommonNameEn}</span>
+                      ${abundanceDots(link.abundanceRating)}
+                    </div>
+                  `).join('')
+                        : `<p style="color: var(--text-dim); font-size: 0.8rem;">No species data recorded yet.</p>`;
+
+                    return `
+                <div class="waterbody-card">
+                  <div class="waterbody-card-name">${wb.name}</div>
+                  <div class="waterbody-card-region">${wb.region}</div>
+                  <div class="waterbody-species-list">${speciesHtml}</div>
+                </div>
+              `;
+                }));
+
+                grid.innerHTML = cards.join('');
+            } catch (err) {
+                msgContainer.innerHTML = `<div class="msg-box msg-error">Failed to load waterbodies: ${err.message}</div>`;
+            }
+        })();
+    </script>
+</body>
+</html>
