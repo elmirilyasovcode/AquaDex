@@ -20,8 +20,15 @@ public class AquaDexDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ForumCategory> ForumCategories { get; set; } = null!;
     public DbSet<ForumThread> ForumThreads { get; set; } = null!;
     public DbSet<ForumReply> ForumReplies { get; set; } = null!;
+    public DbSet<ForumReplyVote> ForumReplyVotes { get; set; } = null!;
+    public DbSet<ForumThreadSpeciesTag> ForumThreadSpeciesTags { get; set; } = null!;
+    public DbSet<ForumThreadWaterbodyTag> ForumThreadWaterbodyTags { get; set; } = null!;
 
-
+    public DbSet<PointsTransaction> PointsTransactions { get; set; } = null!;
+    public DbSet<ExpertConsultation> ExpertConsultations { get; set; } = null!;
+    public DbSet<GuideListing> GuideListings { get; set; } = null!;
+    public DbSet<GuideBooking> GuideBookings { get; set; } = null!;
+    public DbSet<UserNotification> UserNotifications { get; set; } = null!;
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder); // IMPORTANT: must be called for Identity tables to be configured correctly
@@ -98,5 +105,94 @@ public class AquaDexDbContext : IdentityDbContext<ApplicationUser>
             .WithMany()
             .HasForeignKey(r => r.AuthorUserId)
             .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ForumReplyVote>()
+            .HasOne(v => v.Reply)
+            .WithMany()
+            .HasForeignKey(v => v.ReplyId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ForumReplyVote>()
+            .HasOne(v => v.User)
+            .WithMany()
+            .HasForeignKey(v => v.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ForumReplyVote>()
+            .HasIndex(v => new { v.ReplyId, v.UserId })
+            .IsUnique();
+        modelBuilder.Entity<ForumThreadSpeciesTag>()
+            .HasOne(t => t.Thread)
+            .WithMany()
+            .HasForeignKey(t => t.ThreadId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ForumThreadSpeciesTag>()
+            .HasOne(t => t.Species)
+            .WithMany()
+            .HasForeignKey(t => t.SpeciesId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ForumThreadSpeciesTag>()
+            .HasIndex(t => new { t.ThreadId, t.SpeciesId })
+            .IsUnique();
+
+        modelBuilder.Entity<ForumThreadWaterbodyTag>()
+            .HasOne(t => t.Thread)
+            .WithMany()
+            .HasForeignKey(t => t.ThreadId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ForumThreadWaterbodyTag>()
+            .HasOne(t => t.Waterbody)
+            .WithMany()
+            .HasForeignKey(t => t.WaterbodyId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ForumThreadWaterbodyTag>()
+            .HasIndex(t => new { t.ThreadId, t.WaterbodyId })
+            .IsUnique();
+
+        modelBuilder.Entity<PointsTransaction>()
+            .HasOne(p => p.User)
+            .WithMany()
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ExpertConsultation>()
+            .HasOne(c => c.RequesterUser)
+            .WithMany()
+            .HasForeignKey(c => c.RequesterUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ExpertConsultation>()
+            .HasOne(c => c.ExpertUser)
+            .WithMany()
+            .HasForeignKey(c => c.ExpertUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<GuideListing>()
+            .HasOne(g => g.GuideUser)
+            .WithMany()
+            .HasForeignKey(g => g.GuideUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<GuideBooking>()
+            .HasOne(b => b.Listing)
+            .WithMany()
+            .HasForeignKey(b => b.ListingId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<GuideBooking>()
+            .HasOne(b => b.RequesterUser)
+            .WithMany()
+            .HasForeignKey(b => b.RequesterUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<GuideListing>()
+            .Property(g => g.PricePerDay)
+            .HasPrecision(8, 2);
+        modelBuilder.Entity<UserNotification>()
+            .HasOne(n => n.User)
+            .WithMany()
+            .HasForeignKey(n => n.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

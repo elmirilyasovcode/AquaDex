@@ -1,7 +1,13 @@
 using AquaDex.Core.Entities;
 using AquaDex.Infrastructure.Data;
+using AquaDex.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 
 namespace AquaDex.Api
@@ -32,6 +38,11 @@ namespace AquaDex.Api
             .AddEntityFrameworkStores<AquaDexDbContext>()
             .AddDefaultTokenProviders();
 
+            builder.Services.AddSignalR();
+            builder.Services.AddScoped<PointsService>();
+            builder.Services.AddHostedService<ReminderBackgroundService>();
+            builder.Services.AddScoped<BadgeService>();
+
             var app = builder.Build();
 
             using (var scope = app.Services.CreateScope())
@@ -61,9 +72,42 @@ namespace AquaDex.Api
             app.UseAuthorization();
             app.MapControllers();
 
+            app.MapHub<AquaDex.Api.Hubs.ForumHub>("/hubs/forum");
+
 
 
             app.Run();
+        }
+    }
+
+    public class ReminderBackgroundService : BackgroundService
+    {
+        private readonly ILogger<ReminderBackgroundService> _logger;
+
+        public ReminderBackgroundService(ILogger<ReminderBackgroundService> logger)
+        {
+            _logger = logger;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    // Your recurring task logic here
+                    _logger.LogInformation("ReminderBackgroundService is running.");
+
+                    // For example, send reminders or process tasks
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error occurred in ReminderBackgroundService.");
+                }
+
+                // Wait for a specific interval before executing the task again
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+            }
         }
     }
 }

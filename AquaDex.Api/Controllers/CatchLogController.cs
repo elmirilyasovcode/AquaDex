@@ -3,6 +3,7 @@ using AquaDex.Core.Entities;
 using AquaDex.Core.Enums;
 using AquaDex.Core.Helpers;
 using AquaDex.Infrastructure.Data;
+using AquaDex.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -17,11 +18,12 @@ public class CatchLogController : ControllerBase
 {
     private readonly AquaDexDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
-
-    public CatchLogController(AquaDexDbContext context, UserManager<ApplicationUser> userManager)
+    private readonly PointsService _pointsService;
+    public CatchLogController(AquaDexDbContext context, UserManager<ApplicationUser> userManager, PointsService pointsService)
     {
         _context = context;
         _userManager = userManager;
+        _pointsService = pointsService;
     }
 
     // GET: api/catchlog  (public feed — respects privacy toggle)
@@ -87,6 +89,8 @@ public class CatchLogController : ControllerBase
 
         _context.CatchLogs.Add(catchLog);
         await _context.SaveChangesAsync();
+
+        await _pointsService.AwardPointsAsync(userId, PointsReason.CatchLogged, catchLog.Id);
 
         await _context.Entry(catchLog).Reference(c => c.User).LoadAsync();
         await _context.Entry(catchLog).Reference(c => c.Species).LoadAsync();

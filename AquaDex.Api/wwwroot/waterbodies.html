@@ -3,18 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <title>AquaDex — Waterbodies</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/theme.css">
+    <style>
+        .wb-card {
+            opacity: 0;
+            animation: wbIn 0.45s ease forwards;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        @keyframes wbIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .wb-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
+        }
+
+        .wb-name {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        .wb-region {
+            font-size: 0.76rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 14px;
+        }
+
+        .wb-species-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.87rem;
+        }
+
+            .wb-species-row:last-child {
+                border-bottom: none;
+            }
+
+        .abundance-bar {
+            display: flex;
+            gap: 3px;
+        }
+
+            .abundance-bar span {
+                width: 14px;
+                height: 5px;
+                border-radius: 3px;
+                background: var(--border);
+                transition: background 0.2s;
+            }
+
+                .abundance-bar span.filled {
+                    background: var(--accent);
+                }
+    </style>
 </head>
 <body>
     <header id="site-header"></header>
-
     <div class="page-wrap">
         <h1>Waterbodies</h1>
-        <p class="subtitle">Known Fishing Locations</p>
+        <p class="subtitle">Known fishing locations</p>
 
         <div id="msg-container"></div>
-        <div id="waterbody-grid" class="waterbody-grid"></div>
+        <div id="waterbody-grid" class="card-grid"></div>
+
+        <div id="add-waterbody-section" style="display:none; margin-top: 32px; max-width: 480px;">
+            <div class="card">
+                <h2 style="font-size: 1rem; margin-bottom: 14px;">Add Waterbody</h2>
+                <div id="wb-msg"></div>
+                <form id="wb-form">
+                    <div class="field-group"><label for="wbName">Name</label><input type="text" id="wbName" required></div>
+                    <div class="field-group">
+                        <label for="wbType">Type</label>
+                        <select id="wbType"><option value="0">Sea</option><option value="1">River</option><option value="2">Reservoir</option><option value="3">Farm</option></select>
+                    </div>
+                    <div class="field-group"><label for="wbRegion">Region</label><input type="text" id="wbRegion" required></div>
+                    <button type="submit" class="btn">Add Waterbody</button>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script src="js/api.js"></script>
@@ -22,52 +106,70 @@
     <script>
         renderHeader('waterbodies.html');
 
-        function abundanceDots(rating) {
-            let dots = '';
-            for (let i = 1; i <= 5; i++) {
-                dots += `<span class="${i <= rating ? 'filled' : ''}">●</span>`;
-            }
-            return `<span class="abundance-dots">${dots}</span>`;
+        function abundanceBar(rating) {
+            let bars = '';
+            for (let i = 1; i <= 5; i++) bars += `<span class="${i <= rating ? 'filled' : ''}"></span>`;
+            return `<div class="abundance-bar">${bars}</div>`;
         }
 
         (async () => {
             const grid = document.getElementById('waterbody-grid');
             const msgContainer = document.getElementById('msg-container');
-
             try {
                 const waterbodies = await apiRequest('/waterbody');
-
-                const cards = await Promise.all(waterbodies.map(async (wb) => {
+                const cards = await Promise.all(waterbodies.map(async (wb, i) => {
                     let speciesLinks = [];
-                    try {
-                        speciesLinks = await apiRequest(`/specieswaterbody/by-waterbody/${wb.id}`);
-                    } catch {
-                        speciesLinks = [];
-                    }
+                    try { speciesLinks = await apiRequest(`/specieswaterbody/by-waterbody/${wb.id}`); } catch { }
 
                     const speciesHtml = speciesLinks.length > 0
                         ? speciesLinks.map(link => `
-                    <div class="waterbody-species-item">
+                    <div class="wb-species-row">
                       <span>${link.speciesCommonNameEn}</span>
-                      ${abundanceDots(link.abundanceRating)}
+                      ${abundanceBar(link.abundanceRating)}
                     </div>
                   `).join('')
-                        : `<p style="color: var(--text-dim); font-size: 0.8rem;">No species data recorded yet.</p>`;
+                        : `<p style="color: var(--text-secondary); font-size: 0.82rem;">No species data recorded yet.</p>`;
 
                     return `
-                <div class="waterbody-card">
-                  <div class="waterbody-card-name">${wb.name}</div>
-                  <div class="waterbody-card-region">${wb.region}</div>
-                  <div class="waterbody-species-list">${speciesHtml}</div>
+                <div class="card wb-card" style="animation-delay: ${Math.min(i * 0.06, 0.4)}s;">
+                  <div class="wb-name">${wb.name}</div>
+                  <div class="wb-region">${wb.region}</div>
+                  ${speciesHtml}
                 </div>
               `;
                 }));
-
                 grid.innerHTML = cards.join('');
             } catch (err) {
                 msgContainer.innerHTML = `<div class="msg-box msg-error">Failed to load waterbodies: ${err.message}</div>`;
             }
+
+            try {
+                const user = await apiRequest('/auth/me');
+                if (user.roles.includes('VerifiedExpert') || user.roles.includes('Admin')) {
+                    document.getElementById('add-waterbody-section').style.display = 'block';
+                }
+            } catch { }
         })();
+
+        document.getElementById('wb-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('wb-msg');
+            try {
+                await apiRequest('/waterbody', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: document.getElementById('wbName').value,
+                        type: parseInt(document.getElementById('wbType').value),
+                        region: document.getElementById('wbRegion').value
+                    })
+                });
+                msg.innerHTML = `<div class="msg-box msg-success">Waterbody added.</div>`;
+                document.getElementById('wb-form').reset();
+                setTimeout(() => location.reload(), 800);
+            } catch (err) {
+                msg.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
+            }
+        });
     </script>
 </body>
 </html>

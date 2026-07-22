@@ -8,4 +8,6 @@ public class ForumReplyDto
     public string Body { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public bool IsBestAnswer { get; set; }
+    public int VoteCount { get; set; }
+    public bool HasCurrentUserVoted { get; set; }
 }

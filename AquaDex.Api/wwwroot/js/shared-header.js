@@ -4,6 +4,8 @@
         { href: 'codex.html', label: 'Codex' },
         { href: 'catches.html', label: 'Catch Log' },
         { href: 'waterbodies.html', label: 'Waterbodies' },
+        { href: 'forum.html', label: 'Forum' },
+        { href: 'report.html', label: 'Report' },
         { href: 'profile.html', label: 'Profile' }
     ];
 
@@ -13,11 +15,18 @@
 
     document.getElementById('site-header').innerHTML = `
     <div class="header-inner">
-      <a href="index.html" class="logo">AquaDex</a>
+      <a href="index.html" class="logo logo-mark"><span class="logo-dot"></span>AquaDex</a>
       <nav class="nav-links">${navHtml}</nav>
       <div id="auth-status" class="auth-status"></div>
     </div>
   `;
+
+    // Scroll-aware blur/shadow — now applies on every page, not just index.html
+    window.addEventListener('scroll', () => {
+        const header = document.getElementById('site-header');
+        if (window.scrollY > 12) header.classList.add('scrolled');
+        else header.classList.remove('scrolled');
+    });
 
     (async () => {
         const authEl = document.getElementById('auth-status');

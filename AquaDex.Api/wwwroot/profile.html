@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>AquaDex — Profile</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/theme.css">
 </head>
 <body>
     <header id="site-header"></header>
-
     <div class="page-wrap">
         <div id="profile-content">
-            <p style="font-family: var(--font-mono); color: var(--text-dim);">Loading profile...</p>
+            <p style="color: var(--text-secondary);">Loading profile...</p>
         </div>
     </div>
 
@@ -23,55 +22,62 @@
         (async () => {
             const content = document.getElementById('profile-content');
 
+            // Step 1: check auth specifically. If THIS fails, show the login prompt.
+            let user;
             try {
-                const user = await apiRequest('/auth/me');
-                const myCatches = await apiRequest('/catchlog/mine');
-                const discoveredIds = await apiRequest('/catchlog/my-discovered-species');
-                const allSpecies = await apiRequest('/species');
-
-                const codexPercent = allSpecies.length > 0
-                    ? Math.round((discoveredIds.length / allSpecies.length) * 100)
-                    : 0;
-
-                content.innerHTML = `
-              <h1>${user.displayName}</h1>
-              <p class="subtitle">${user.roles.join(' · ')}</p>
-
-              <div class="profile-stat-grid">
-                <div class="profile-stat">
-                  <div class="profile-stat-num">${myCatches.length}</div>
-                  <div class="profile-stat-label">Total Catches</div>
-                </div>
-                <div class="profile-stat">
-                  <div class="profile-stat-num">${discoveredIds.length}</div>
-                  <div class="profile-stat-label">Species Discovered</div>
-                </div>
-                <div class="profile-stat">
-                  <div class="profile-stat-num">${codexPercent}%</div>
-                  <div class="profile-stat-label">Codex Complete</div>
-                </div>
-              </div>
-
-              <div class="hud-panel">
-                <h2 style="font-size: 1rem; margin-bottom: 16px;">Recent Catches</h2>
-                <div class="feed-list">
-                  ${myCatches.length > 0 ? myCatches.slice(0, 5).map(c => `
-                    <div class="feed-card">
-                      <div class="feed-card-main">
-                        <div class="feed-card-species">${c.speciesCommonNameEn}</div>
-                        <div class="feed-card-meta">
-                          ${c.weightKg ? `<span>${c.weightKg} kg</span>` : ''}
-                          <span>${new Date(c.caughtAt).toLocaleDateString('en-GB')}</span>
-                        </div>
-                      </div>
-                    </div>
-                  `).join('') : '<p style="color: var(--text-dim); font-size: 0.85rem;">No catches logged yet.</p>'}
-                </div>
-              </div>
-            `;
+                user = await apiRequest('/auth/me');
             } catch {
                 content.innerHTML = `<div class="msg-box msg-error">You must be logged in to view your profile. <a href="login.html">Sign in</a></div>`;
+                return;
             }
+
+            // Step 2: load everything else independently so one failure doesn't hide the rest
+            let myCatches = [];
+            let discoveredIds = [];
+            let allSpecies = [];
+            let pointsSummary = { totalPoints: 0, recentTransactions: [] };
+            let badges = [];
+            let loadErrors = [];
+
+            try { myCatches = await apiRequest('/catchlog/mine'); } catch (e) { loadErrors.push('catches: ' + e.message); }
+            try { discoveredIds = await apiRequest('/catchlog/my-discovered-species'); } catch (e) { loadErrors.push('discovered species: ' + e.message); }
+            try { allSpecies = await apiRequest('/species'); } catch (e) { loadErrors.push('species list: ' + e.message); }
+            try { pointsSummary = await apiRequest('/points/mine'); } catch (e) { loadErrors.push('points: ' + e.message); }
+            try { badges = await apiRequest('/points/badges'); } catch (e) { loadErrors.push('badges: ' + e.message); }
+
+            const codexPercent = allSpecies.length > 0 ? Math.round((discoveredIds.length / allSpecies.length) * 100) : 0;
+
+            content.innerHTML = `
+            <h1>${user.displayName}</h1>
+            <p class="subtitle">${user.roles.join(' · ')}</p>
+
+            ${loadErrors.length > 0 ? `<div class="msg-box msg-error">Some data failed to load: ${loadErrors.join(' | ')}</div>` : ''}
+
+            <div class="profile-stat-grid">
+              <div class="profile-stat"><div class="profile-stat-num">${myCatches.length}</div><div class="profile-stat-label">Total Catches</div></div>
+              <div class="profile-stat"><div class="profile-stat-num">${discoveredIds.length}</div><div class="profile-stat-label">Species Discovered</div></div>
+              <div class="profile-stat"><div class="profile-stat-num">${codexPercent}%</div><div class="profile-stat-label">Codex Complete</div></div>
+              <div class="profile-stat"><div class="profile-stat-num">${pointsSummary.totalPoints}</div><div class="profile-stat-label">Total Points</div></div>
+            </div>
+
+            <div class="card" style="margin-bottom: 20px;">
+              <h2 style="font-size: 1rem; margin-bottom: 14px;">Badges</h2>
+              <div>${badges.map(b => `<span class="chip${b.earned ? '' : ' warning'}">${b.earned ? '✓' : '🔒'} ${b.name}</span>`).join('') || '<span style="color: var(--text-secondary); font-size: 0.85rem;">No badge data.</span>'}</div>
+            </div>
+
+            <div class="card">
+              <h2 style="font-size: 1rem; margin-bottom: 14px;">Recent Catches</h2>
+              ${myCatches.length > 0 ? myCatches.slice(0, 5).map(c => `
+                <div class="list-item">
+                  <div class="list-item-title">${c.speciesCommonNameEn}</div>
+                  <div class="list-item-meta">
+                    ${c.weightKg ? `<span>${c.weightKg} kg</span>` : ''}
+                    <span>${new Date(c.caughtAt).toLocaleDateString('en-GB')}</span>
+                  </div>
+                </div>
+              `).join('') : '<p style="color: var(--text-secondary); font-size: 0.85rem;">No catches logged yet.</p>'}
+            </div>
+          `;
         })();
     </script>
 </body>

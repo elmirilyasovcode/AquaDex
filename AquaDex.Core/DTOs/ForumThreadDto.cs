@@ -11,4 +11,6 @@ public class ForumThreadDto
     public DateTime CreatedAt { get; set; }
     public bool IsPinned { get; set; }
     public int ReplyCount { get; set; }
+    public List<TagSummaryDto> SpeciesTags { get; set; } = new();
+    public List<TagSummaryDto> WaterbodyTags { get; set; } = new();
 }

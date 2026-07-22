@@ -4,6 +4,7 @@ using AquaDex.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AquaDex.Infrastructure.Migrations
 {
     [DbContext(typeof(AquaDexDbContext))]
-    partial class AquaDexDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260720110232_AddExpertConsultation")]
+    partial class AddExpertConsultation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -399,83 +402,6 @@ namespace AquaDex.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("ForumThreadWaterbodyTags");
-                });
-
-            modelBuilder.Entity("AquaDex.Core.Entities.GuideBooking", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("ListingId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("RequestedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RequesterUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime?>("RespondedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ListingId");
-
-                    b.HasIndex("RequesterUserId");
-
-                    b.ToTable("GuideBookings");
-                });
-
-            modelBuilder.Entity("AquaDex.Core.Entities.GuideListing", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("GuideUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<decimal>("PricePerDay")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("decimal(8,2)");
-
-                    b.Property<string>("Region")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GuideUserId");
-
-                    b.ToTable("GuideListings");
                 });
 
             modelBuilder.Entity("AquaDex.Core.Entities.PointsTransaction", b =>
@@ -944,36 +870,6 @@ namespace AquaDex.Infrastructure.Migrations
                     b.Navigation("Thread");
 
                     b.Navigation("Waterbody");
-                });
-
-            modelBuilder.Entity("AquaDex.Core.Entities.GuideBooking", b =>
-                {
-                    b.HasOne("AquaDex.Core.Entities.GuideListing", "Listing")
-                        .WithMany()
-                        .HasForeignKey("ListingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("AquaDex.Core.Entities.ApplicationUser", "RequesterUser")
-                        .WithMany()
-                        .HasForeignKey("RequesterUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Listing");
-
-                    b.Navigation("RequesterUser");
-                });
-
-            modelBuilder.Entity("AquaDex.Core.Entities.GuideListing", b =>
-                {
-                    b.HasOne("AquaDex.Core.Entities.ApplicationUser", "GuideUser")
-                        .WithMany()
-                        .HasForeignKey("GuideUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("GuideUser");
                 });
 
             modelBuilder.Entity("AquaDex.Core.Entities.PointsTransaction", b =>

@@ -1,0 +1,470 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AquaDex — Forum</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <style>
+        /* Forum-specific additions, layered on top of theme.css rather than replacing it */
+        .cat-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 20px;
+            cursor: pointer;
+            transition: border-color 0.15s, transform 0.15s;
+        }
+
+            .cat-card:hover {
+                border-color: var(--accent);
+                transform: translateX(2px);
+            }
+
+        .cat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: var(--bg-elevated);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .cat-body {
+            flex: 1;
+        }
+
+        .cat-name {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .cat-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .cat-count {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .thread-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+
+            .thread-row:hover {
+                border-color: var(--accent);
+            }
+
+        .thread-row-title {
+            font-weight: 600;
+            font-size: 0.98rem;
+        }
+
+        .thread-row-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .thread-row-replies {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            text-align: center;
+            min-width: 60px;
+        }
+
+            .thread-row-replies .n {
+                font-family: var(--font-display);
+                font-size: 1.2rem;
+                color: var(--accent);
+                display: block;
+            }
+
+        .pin-tag {
+            color: var(--warning);
+            font-size: 0.78rem;
+            margin-right: 6px;
+        }
+
+        .thread-body-card {
+            padding: 24px;
+        }
+
+        .thread-body-title {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .thread-body-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+        }
+
+        .thread-body-text {
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .reply-card {
+            margin-bottom: 10px;
+        }
+
+            .reply-card.best {
+                border-color: #4fd18a;
+                background: rgba(79, 209, 138, 0.06);
+            }
+
+        .reply-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .reply-author {
+            font-weight: 600;
+            font-size: 0.88rem;
+        }
+
+        .reply-date {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-left: 8px;
+        }
+
+        .best-badge {
+            color: #4fd18a;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .reply-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            align-items: center;
+        }
+
+        .vote-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+            .vote-pill.voted {
+                border-color: var(--accent);
+                color: var(--accent);
+                background: rgba(79, 209, 197, 0.08);
+            }
+
+        .live-tag {
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--accent);
+            background: rgba(79, 209, 197, 0.12);
+            padding: 2px 8px;
+            border-radius: 10px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .breadcrumb {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-bottom: 18px;
+        }
+
+        .empty-state {
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+            padding: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <header id="site-header"></header>
+    <div class="page-wrap">
+        <div id="forum-content">
+            <p class="empty-state">Loading...</p>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/shared-header.js"></script>
+    <script>
+        renderHeader('forum.html');
+        const content = document.getElementById('forum-content');
+        const CATEGORY_ICONS = ['🔍', '🎣', '📍', '📜', '💬'];
+
+        function getParam(name) { return new URLSearchParams(window.location.search).get(name); }
+        function tagChips(tags) { return (tags || []).map(t => `<span class="chip">${t.name}</span>`).join(''); }
+        function fmtDate(d) { return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); }
+
+        // ---------- VIEW: Category List ----------
+        async function renderCategoryList() {
+            content.innerHTML = `
+                <h1>Forum</h1>
+                <p class="subtitle">Community discussion — ask questions, share reports, talk gear</p>
+                <div id="cat-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+              `;
+            try {
+                const categories = await apiRequest('/forumcategory');
+                document.getElementById('cat-list').innerHTML = categories.map((c, i) => `
+                  <div class="card cat-card" onclick="window.location.href='forum.html?categoryId=${c.id}'">
+                    <div class="cat-icon">${CATEGORY_ICONS[i % CATEGORY_ICONS.length]}</div>
+                    <div class="cat-body">
+                      <div class="cat-name">${c.name}</div>
+                      <div class="cat-desc">${c.description}</div>
+                    </div>
+                    <div class="cat-count">${c.threadCount} thread${c.threadCount === 1 ? '' : 's'}</div>
+                  </div>
+                `).join('');
+            } catch (err) {
+                content.innerHTML += `<div class="msg-box msg-error">${err.message}</div>`;
+            }
+        }
+
+        // ---------- VIEW: Thread List ----------
+        async function renderThreadList(categoryId) {
+            content.innerHTML = `
+                <div class="breadcrumb"><a href="forum.html">Forum</a> / <span id="crumb-cat">...</span></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+                  <h1 id="cat-title">Loading...</h1>
+                  <button class="btn" id="new-thread-btn">+ New Thread</button>
+                </div>
+                <p class="subtitle" id="cat-desc"></p>
+                <div id="new-thread-panel" style="display:none; margin-bottom: 24px;"></div>
+                <div id="thread-list"></div>
+              `;
+
+            const categories = await apiRequest('/forumcategory');
+            const category = categories.find(c => c.id == categoryId);
+            document.getElementById('cat-title').textContent = category ? category.name : 'Category';
+            document.getElementById('cat-desc').textContent = category ? category.description : '';
+            document.getElementById('crumb-cat').textContent = category ? category.name : '';
+
+            document.getElementById('new-thread-btn').addEventListener('click', () => showNewThreadForm(categoryId));
+
+            const threads = await apiRequest(`/forumthread?categoryId=${categoryId}`);
+            const listEl = document.getElementById('thread-list');
+
+            if (threads.length === 0) {
+                listEl.innerHTML = `<div class="card empty-state">No threads yet in this category. Be the first to start a discussion.</div>`;
+                return;
+            }
+
+            listEl.innerHTML = threads.map(t => `
+                <div class="card thread-row" style="margin-bottom: 8px;" onclick="window.location.href='forum.html?threadId=${t.id}'">
+                  <div>
+                    <div class="thread-row-title">${t.isPinned ? '<span class="pin-tag">📌 PINNED</span>' : ''}${t.title}</div>
+                    <div class="thread-row-meta">
+                      <span>${t.authorDisplayName}</span>
+                      <span>${fmtDate(t.createdAt)}</span>
+                    </div>
+                    <div style="margin-top: 8px;">${tagChips(t.speciesTags)}${tagChips(t.waterbodyTags)}</div>
+                  </div>
+                  <div class="thread-row-replies"><span class="n">${t.replyCount}</span>replies</div>
+                </div>
+              `).join('');
+        }
+
+        async function showNewThreadForm(categoryId) {
+            const panel = document.getElementById('new-thread-panel');
+            panel.style.display = 'block';
+            try { await apiRequest('/auth/me'); }
+            catch {
+                panel.innerHTML = `<div class="msg-box msg-error">You must be logged in to post. <a href="login.html">Sign in</a></div>`;
+                return;
+            }
+            const species = await apiRequest('/species');
+            panel.innerHTML = `
+                <div class="card">
+                  <h2 style="font-size: 1rem; margin-bottom: 16px;">Start a new thread</h2>
+                  <div id="new-thread-msg"></div>
+                  <form id="new-thread-form">
+                    <div class="field-group"><label for="title">Title</label><input type="text" id="title" required></div>
+                    <div class="field-group"><label for="body">Message</label><textarea id="body" rows="4" required></textarea></div>
+                    <div class="field-group">
+                      <label for="speciesTag">Tag a species (optional)</label>
+                      <select id="speciesTag"><option value="">— None —</option>${species.map(s => `<option value="${s.id}">${s.commonNameEn}</option>`).join('')}</select>
+                    </div>
+                    <button type="submit" class="btn">Post Thread</button>
+                  </form>
+                </div>
+              `;
+            document.getElementById('new-thread-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const msg = document.getElementById('new-thread-msg');
+                const speciesTagId = document.getElementById('speciesTag').value;
+                try {
+                    const result = await apiRequest('/forumthread', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            categoryId: parseInt(categoryId),
+                            title: document.getElementById('title').value,
+                            body: document.getElementById('body').value,
+                            speciesTagIds: speciesTagId ? [parseInt(speciesTagId)] : [],
+                            waterbodyTagIds: []
+                        })
+                    });
+                    window.location.href = `forum.html?threadId=${result.id}`;
+                } catch (err) {
+                    msg.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
+                }
+            });
+        }
+
+        // ---------- VIEW: Thread Detail ----------
+        async function renderThreadDetail(threadId) {
+            content.innerHTML = `<p class="empty-state">Loading thread...</p>`;
+            let currentUser = null;
+            try { currentUser = await apiRequest('/auth/me'); } catch { }
+
+            const thread = await apiRequest(`/forumthread/${threadId}`);
+
+            content.innerHTML = `
+                <div class="breadcrumb"><a href="forum.html">Forum</a> / <a href="forum.html?categoryId=${thread.categoryId}">${thread.categoryName}</a></div>
+                <div class="card thread-body-card">
+                  <div class="thread-body-title">${thread.title}</div>
+                  <div class="thread-body-meta">${thread.authorDisplayName} · ${fmtDate(thread.createdAt)}</div>
+                  <div style="margin-bottom: 14px;">${tagChips(thread.speciesTags)}${tagChips(thread.waterbodyTags)}</div>
+                  <div class="thread-body-text">${thread.body}</div>
+                </div>
+
+                <h2 style="font-size: 1.05rem; margin: 26px 0 14px;">${thread.replies.length} ${thread.replies.length === 1 ? 'Reply' : 'Replies'}</h2>
+                <div id="replies-list"></div>
+
+                <div class="card" style="margin-top: 20px;">
+                  <h2 style="font-size: 1rem; margin-bottom: 14px;">Post a reply</h2>
+                  <div id="reply-msg"></div>
+                  <form id="reply-form">
+                    <div class="field-group"><textarea id="replyBody" rows="3" required placeholder="Share your answer or thoughts..."></textarea></div>
+                    <button type="submit" class="btn">Reply</button>
+                  </form>
+                </div>
+              `;
+
+            renderReplies(thread, currentUser);
+
+            // Live updates via SignalR
+            if (window.forumConnection) { await window.forumConnection.stop(); }
+            const connection = new signalR.HubConnectionBuilder().withUrl('/hubs/forum').withAutomaticReconnect().build();
+            connection.on('ReceiveReply', (newReply) => {
+                const repliesEl = document.getElementById('replies-list');
+                if (!repliesEl) return;
+                repliesEl.insertAdjacentHTML('beforeend', `
+                  <div class="card reply-card">
+                    <div class="reply-head">
+                      <div><span class="reply-author">${newReply.authorDisplayName}</span><span class="reply-date">${fmtDate(newReply.createdAt)}</span></div>
+                      <span class="live-tag">● LIVE</span>
+                    </div>
+                    <div>${newReply.body}</div>
+                  </div>
+                `);
+            });
+            await connection.start();
+            await connection.invoke('JoinThread', parseInt(threadId));
+            window.forumConnection = connection;
+
+            document.getElementById('reply-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const msg = document.getElementById('reply-msg');
+                try {
+                    await apiRequest(`/forumthread/${threadId}/reply`, { method: 'POST', body: JSON.stringify({ body: document.getElementById('replyBody').value }) });
+                    await renderThreadDetail(threadId);
+                } catch (err) {
+                    msg.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
+                }
+            });
+        }
+
+        function renderReplies(thread, currentUser) {
+            const repliesEl = document.getElementById('replies-list');
+            if (thread.replies.length === 0) {
+                repliesEl.innerHTML = `<div class="card empty-state">No replies yet. Be the first to respond.</div>`;
+                return;
+            }
+
+            repliesEl.innerHTML = thread.replies.map(r => `
+                <div class="card reply-card ${r.isBestAnswer ? 'best' : ''}">
+                  <div class="reply-head">
+                    <div><span class="reply-author">${r.authorDisplayName}</span><span class="reply-date">${fmtDate(r.createdAt)}</span></div>
+                    ${r.isBestAnswer ? '<span class="best-badge">✓ Best Answer</span>' : ''}
+                  </div>
+                  <div>${r.body}</div>
+                  <div class="reply-actions">
+                    <button class="vote-pill ${r.hasCurrentUserVoted ? 'voted' : ''}" data-reply-id="${r.id}" data-voted="${r.hasCurrentUserVoted}">▲ ${r.voteCount}</button>
+                    ${(currentUser && currentUser.userId === thread.authorUserId && !r.isBestAnswer) ? `<button class="vote-pill mark-best-btn" data-reply-id="${r.id}">Mark as Best</button>` : ''}
+                  </div>
+                </div>
+              `).join('');
+
+            repliesEl.querySelectorAll('.vote-pill[data-voted]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const replyId = btn.dataset.replyId;
+                    const voted = btn.dataset.voted === 'true';
+                    try {
+                        await apiRequest(`/forumthread/reply/${replyId}/vote`, { method: voted ? 'DELETE' : 'POST' });
+                        await renderThreadDetail(thread.id);
+                    } catch (err) { alert(err.message); }
+                });
+            });
+            repliesEl.querySelectorAll('.mark-best-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    try {
+                        await apiRequest(`/forumthread/${thread.id}/reply/${btn.dataset.replyId}/mark-best`, { method: 'POST' });
+                        await renderThreadDetail(thread.id);
+                    } catch (err) { alert(err.message); }
+                });
+            });
+        }
+
+        // ---------- ROUTER ----------
+        (async () => {
+            const threadId = getParam('threadId');
+            const categoryId = getParam('categoryId');
+            if (threadId) await renderThreadDetail(threadId);
+            else if (categoryId) await renderThreadList(categoryId);
+            else await renderCategoryList();
+        })();
+    </script>
+</body>
+</html>
