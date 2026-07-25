@@ -119,6 +119,13 @@
                 color: var(--text-secondary);
                 font-style: italic;
             }
+
+        .feed-photo {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -130,7 +137,11 @@
                 <h1>Catch Log</h1>
                 <p class="subtitle" style="margin-bottom: 0;">Public field feed</p>
             </div>
-            <button id="toggle-form-btn" class="btn">+ Log a Catch</button>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <a href="/api/v1/catchlog/export/csv" class="btn secondary">Export CSV</a>
+                <a href="/api/v1/catchlog/export/pdf" class="btn secondary">Export PDF</a>
+                <button id="toggle-form-btn" class="btn">+ Log a Catch</button>
+            </div>
         </div>
 
         <div id="log-form-panel" class="card" style="max-width: 560px;">
@@ -152,6 +163,12 @@
                 <div class="checkbox-row">
                     <input type="checkbox" id="shareExactLocation">
                     <label for="shareExactLocation">Share exact location publicly</label>
+                </div>
+
+                <div class="field-group">
+                    <label for="photoFile">Photo (optional)</label>
+                    <input type="file" id="photoFile" accept=".jpg,.jpeg,.png,.webp">
+                    <div id="photo-preview" style="margin-top: 8px;"></div>
                 </div>
                 <button type="submit" class="btn">Submit Catch</button>
             </form>
@@ -200,47 +217,76 @@
                     return;
                 }
                 feedList.innerHTML = logs.map((log, i) => `
-              <div class="card feed-item" style="margin-bottom: 8px; animation-delay: ${Math.min(i * 0.05, 0.5)}s;">
-                <div class="feed-row">
-                  <div class="feed-icon">🐟</div>
-                  <div class="feed-main">
-                    <div class="feed-species">${log.speciesCommonNameEn}</div>
-                    <div class="feed-meta">
-                      <span>${log.userDisplayName}</span>
-                      ${log.weightKg ? `<span>${log.weightKg} kg</span>` : ''}
-                      ${log.lengthCm ? `<span>${log.lengthCm} cm</span>` : ''}
-                      ${formatCoords(log.latitude, log.longitude)}
-                      <span>${new Date(log.caughtAt).toLocaleDateString('en-GB')}</span>
+                  <div class="card feed-item" style="margin-bottom: 8px; animation-delay: ${Math.min(i * 0.05, 0.5)}s;">
+                    <div class="feed-row">
+                      <div class="feed-icon">🐟</div>
+                      <div class="feed-main">
+                        <div class="feed-species">${log.speciesCommonNameEn}</div>
+                        <div class="feed-meta">
+                          <span>${log.userDisplayName}</span>
+                          ${log.weightKg ? `<span>${log.weightKg} kg</span>` : ''}
+                          ${log.lengthCm ? `<span>${log.lengthCm} cm</span>` : ''}
+                          ${formatCoords(log.latitude, log.longitude)}
+                          <span>${new Date(log.caughtAt).toLocaleDateString('en-GB')}</span>
+                        </div>
+                        ${log.notes ? `<div class="feed-notes">${log.notes}</div>` : ''}
+                        ${log.photoUrl ? `<img src="${log.photoUrl}" class="feed-photo">` : ''}
+                        ${log.isProtectedSpeciesCatch ? `<span class="protected-flag">⚠ Protected Species</span>` : ''}
+                      </div>
                     </div>
-                    ${log.notes ? `<div class="feed-notes">${log.notes}</div>` : ''}
-                    ${log.isProtectedSpeciesCatch ? `<span class="protected-flag">⚠ Protected Species</span>` : ''}
                   </div>
-                </div>
-              </div>
-            `).join('');
+                `).join('');
             } catch (err) {
                 feedMsg.innerHTML = `<div class="msg-box msg-error">Failed to load feed: ${err.message}</div>`;
             }
         }
 
+        document.getElementById('photoFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            const preview = document.getElementById('photo-preview');
+            if (file) {
+                preview.innerHTML = `<img src="${URL.createObjectURL(file)}" style="max-width: 160px; border-radius: 8px; border: 1px solid var(--border);">`;
+            } else {
+                preview.innerHTML = '';
+            }
+        });
+
         document.getElementById('catch-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const formMsg = document.getElementById('form-msg');
             formMsg.innerHTML = '';
+
+            let photoUrl = null;
+            const photoFile = document.getElementById('photoFile').files[0];
+
+            if (photoFile) {
+                try {
+                    formMsg.innerHTML = `<div class="msg-box msg-success">Uploading photo...</div>`;
+                    const uploadResult = await uploadFile(photoFile);
+                    photoUrl = uploadResult.url;
+                } catch (err) {
+                    formMsg.innerHTML = `<div class="msg-box msg-error">Photo upload failed: ${err.message}</div>`;
+                    return;
+                }
+            }
+
             const payload = {
                 speciesId: parseInt(document.getElementById('speciesSelect').value),
                 weightKg: document.getElementById('weightKg').value ? parseFloat(document.getElementById('weightKg').value) : null,
                 lengthCm: document.getElementById('lengthCm').value ? parseFloat(document.getElementById('lengthCm').value) : null,
+                photoUrl: photoUrl,
                 latitude: parseFloat(document.getElementById('latitude').value),
                 longitude: parseFloat(document.getElementById('longitude').value),
                 shareExactLocation: document.getElementById('shareExactLocation').checked,
                 caughtAt: new Date(document.getElementById('caughtAt').value).toISOString(),
                 notes: document.getElementById('notes').value || null
             };
+
             try {
                 await apiRequest('/catchlog', { method: 'POST', body: JSON.stringify(payload) });
                 formMsg.innerHTML = `<div class="msg-box msg-success">Catch logged successfully.</div>`;
                 document.getElementById('catch-form').reset();
+                document.getElementById('photo-preview').innerHTML = '';
                 await loadFeed();
             } catch (err) {
                 formMsg.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;

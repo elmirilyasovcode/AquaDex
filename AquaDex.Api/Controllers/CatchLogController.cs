@@ -1,4 +1,5 @@
-﻿using AquaDex.Core.DTOs;
+﻿using System.Text;
+using AquaDex.Core.DTOs;
 using AquaDex.Core.Entities;
 using AquaDex.Core.Enums;
 using AquaDex.Core.Helpers;
@@ -13,7 +14,8 @@ using Microsoft.EntityFrameworkCore;
 namespace AquaDex.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[Asp.Versioning.ApiVersion("1.0")]
 public class CatchLogController : ControllerBase
 {
     private readonly AquaDexDbContext _context;
@@ -26,7 +28,6 @@ public class CatchLogController : ControllerBase
         _pointsService = pointsService;
     }
 
-    // GET: api/catchlog  (public feed — respects privacy toggle)
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CatchLogDto>>> GetAllCatchLogs()
     {
@@ -40,7 +41,6 @@ public class CatchLogController : ControllerBase
         return Ok(dtos);
     }
 
-    // GET: api/catchlog/mine  (logged-in user's own catches — always full detail, own privacy doesn't hide from self)
     [HttpGet("mine")]
     [Authorize]
     public async Task<ActionResult<IEnumerable<CatchLogDto>>> GetMyCatchLogs()
@@ -54,12 +54,10 @@ public class CatchLogController : ControllerBase
             .OrderByDescending(c => c.CaughtAt)
             .ToListAsync();
 
-        // Own catches always show full location regardless of ShareExactLocation, since it's the owner viewing their own data
         var dtos = logs.Select(c => MapToDto(c, forceShowLocation: true)).ToList();
         return Ok(dtos);
     }
 
-    // POST: api/catchlog
     [HttpPost]
     [Authorize]
     public async Task<ActionResult<CatchLogDto>> CreateCatchLog(CreateCatchLogDto dto)
@@ -121,7 +119,7 @@ public class CatchLogController : ControllerBase
             IsProtectedSpeciesCatch = c.Species.ConservationStatus >= ConservationStatus.Vulnerable
         };
     }
-    // GET: api/catchlog/nearby?latitude=40.4093&longitude=49.8671&radiusKm=25
+
     [HttpGet("nearby")]
     public async Task<ActionResult<IEnumerable<CatchLogDto>>> GetNearbyCatchLogs(
     [FromQuery] double latitude,
@@ -159,5 +157,41 @@ public class CatchLogController : ControllerBase
             .ToListAsync();
 
         return Ok(speciesIds);
+    }
+    [HttpGet("export/csv")]
+    public async Task<IActionResult> ExportCsv()
+    {
+        var logs = await _context.CatchLogs
+            .Include(c => c.User)
+            .Include(c => c.Species)
+            .OrderByDescending(c => c.CaughtAt)
+            .ToListAsync();
+
+        var csv = new StringBuilder();
+        csv.AppendLine("Species,Angler,WeightKg,LengthCm,CaughtAt,Notes");
+
+        foreach (var log in logs)
+        {
+            // Escape commas/quotes in free-text fields so the CSV doesn't break
+            var notes = (log.Notes ?? "").Replace("\"", "\"\"");
+            csv.AppendLine($"\"{log.Species.CommonNameEn}\",\"{log.User.DisplayName}\",{log.WeightKg},{log.LengthCm},{log.CaughtAt:yyyy-MM-dd},\"{notes}\"");
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(csv.ToString());
+        return File(bytes, "text/csv", $"aquadex-catchlog-{DateTime.UtcNow:yyyyMMdd}.csv");
+    }
+
+    [HttpGet("export/pdf")]
+    public async Task<IActionResult> ExportPdf()
+    {
+        var logs = await _context.CatchLogs
+            .Include(c => c.User)
+            .Include(c => c.Species)
+            .OrderByDescending(c => c.CaughtAt)
+            .Take(50)
+            .ToListAsync();
+
+        var pdfBytes = AquaDex.Api.Services.CatchLogPdfBuilder.Build(logs);
+        return File(pdfBytes, "application/pdf", $"aquadex-catchlog-{DateTime.UtcNow:yyyyMMdd}.pdf");
     }
 }

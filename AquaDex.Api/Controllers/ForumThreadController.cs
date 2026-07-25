@@ -13,20 +13,25 @@ using Microsoft.EntityFrameworkCore;
 namespace AquaDex.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[Asp.Versioning.ApiVersion("1.0")]
 public class ForumThreadController : ControllerBase
 {
     private readonly AquaDexDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly PointsService _pointsService;
     private readonly IHubContext<ForumHub> _hubContext;
+    private readonly AuditService _auditService;
+    private readonly FishIdSuggestionService _fishIdService;
 
-    public ForumThreadController(AquaDexDbContext context, UserManager<ApplicationUser> userManager, PointsService pointsService, IHubContext<ForumHub> hubContext)
+    public ForumThreadController(AquaDexDbContext context, UserManager<ApplicationUser> userManager, PointsService pointsService, IHubContext<ForumHub> hubContext, AuditService auditService, FishIdSuggestionService fishIdService)
     {
         _context = context;
         _userManager = userManager;
         _pointsService = pointsService;
         _hubContext = hubContext;
+        _auditService = auditService;
+        _fishIdService = fishIdService;
     }
 
     // GET: api/forumthread?categoryId=1
@@ -81,7 +86,7 @@ public class ForumThreadController : ControllerBase
         return Ok(result);
     }
 
-    // GET: api/forumthread/5
+    
     [HttpGet("{id}")]
     public async Task<ActionResult<ForumThreadDetailDto>> GetThreadById(int id)
     {
@@ -339,6 +344,14 @@ public class ForumThreadController : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        await _auditService.LogAsync(
+            userId!,
+            "ForumReply.MarkedBestAnswer",
+            "ForumReply",
+            replyId.ToString(),
+            $"Thread {threadId}"
+        );
+
         await _pointsService.AwardPointsAsync(targetReply.AuthorUserId, PointsReason.ForumBestAnswer, targetReply.Id);
         return Ok();
     }
@@ -404,5 +417,26 @@ public class ForumThreadController : ControllerBase
             .ToListAsync();
 
         return Ok(threads);
+
+
+    }
+    [HttpGet("{id}/ai-suggestion")]
+    [Authorize]
+    public async Task<IActionResult> GetAiSuggestion(int id)
+    {
+        var thread = await _context.ForumThreads.FirstOrDefaultAsync(t => t.Id == id);
+        if (thread == null) return NotFound();
+
+        var species = await _context.Species.ToListAsync();
+
+        try
+        {
+            var suggestion = await _fishIdService.SuggestSpeciesAsync(thread.Title, thread.Body, species);
+            return Ok(new { suggestion });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(503, new { error = "AI suggestion temporarily unavailable.", detail = ex.Message });
+        }
     }
 }

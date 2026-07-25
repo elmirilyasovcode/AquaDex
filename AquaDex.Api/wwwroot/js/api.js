@@ -1,9 +1,9 @@
-﻿const API_BASE = '/api';
+﻿const API_BASE = '/api/v1';
 
 async function apiRequest(endpoint, options = {}) {
     const response = await fetch(`${API_BASE}${endpoint}`, {
         ...options,
-        credentials: 'include', // sends the auth cookie automatically
+        credentials: 'include', 
         headers: {
             'Content-Type': 'application/json',
             ...options.headers
@@ -27,4 +27,23 @@ async function apiRequest(endpoint, options = {}) {
         return response.json();
     }
     return null;
+}
+
+
+async function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE}/upload/image`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `Upload failed (${response.status})`);
+    }
+
+    return response.json(); 
 }

@@ -2,4 +2,5 @@
   <Project Path="AquaDex.Api/AquaDex.Api.csproj" />
   <Project Path="AquaDex.Core/AquaDex.Core.csproj" />
   <Project Path="AquaDex.Infrastructure/AquaDex.Infrastructure.csproj" />
+  <Project Path="AquaDex.Tests/AquaDex.Tests.csproj" Id="e97acd2d-6aaf-4248-8193-f9e747e50345" />
 </Solution>

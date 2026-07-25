@@ -5,25 +5,34 @@ using AquaDex.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace AquaDex.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[Asp.Versioning.ApiVersion("1.0")]
 
 public class SpeciesController : ControllerBase
 {
     private readonly AquaDexDbContext _context;
-
-    public SpeciesController(AquaDexDbContext context)
+    private readonly IMemoryCache _cache;
+    private const string SpeciesListCacheKey = "species:all";
+    public SpeciesController(AquaDexDbContext context, IMemoryCache cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     // GET: api/species
     [HttpGet]
     public async Task<ActionResult<IEnumerable<SpeciesDto>>> GetAllSpecies()
     {
+        if (_cache.TryGetValue(SpeciesListCacheKey, out List<SpeciesDto>? cached))
+        {
+            return Ok(cached);
+        }
+
         var species = await _context.Species
             .Select(s => new SpeciesDto
             {
@@ -41,6 +50,8 @@ public class SpeciesController : ControllerBase
                 PhotoUrl = s.PhotoUrl
             })
             .ToListAsync();
+
+        _cache.Set(SpeciesListCacheKey, species, TimeSpan.FromMinutes(10));
 
         return Ok(species);
     }
@@ -95,6 +106,7 @@ public class SpeciesController : ControllerBase
 
         _context.Species.Add(species);
         await _context.SaveChangesAsync();
+        _cache.Remove(SpeciesListCacheKey);
 
         var resultDto = new SpeciesDto
         {

@@ -1,13 +1,11 @@
+using System.Threading.RateLimiting;
 using AquaDex.Core.Entities;
 using AquaDex.Infrastructure.Data;
 using AquaDex.Infrastructure.Services;
+using Hangfire;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
+using Serilog;
 
 
 namespace AquaDex.Api
@@ -18,10 +16,17 @@ namespace AquaDex.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            builder.Host.UseSerilog((context, config) =>
+            {
+                config
+                    .WriteTo.Console()
+                    .WriteTo.File("Logs/aquadex-.log", rollingInterval: RollingInterval.Day)
+                    .Enrich.FromLogContext();
+            });
+
+
 
             builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
             builder.Services.AddDbContext<AquaDexDbContext>(options =>
@@ -29,7 +34,6 @@ namespace AquaDex.Api
 
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
-                // Keep password rules reasonable for a capstone demo — not enterprise-grade, but not trivially weak either
                 options.Password.RequiredLength = 6;
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequireUppercase = false;
@@ -38,12 +42,64 @@ namespace AquaDex.Api
             .AddEntityFrameworkStores<AquaDexDbContext>()
             .AddDefaultTokenProviders();
 
+            builder.Services.AddApiVersioning(options =>
+            {
+                options.DefaultApiVersion = new Asp.Versioning.ApiVersion(1.0);
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ReportApiVersions = true;
+            }).AddApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'VVV";
+                options.SubstituteApiVersionInUrl = true;
+            });
+
+            builder.Services.AddRateLimiter(options =>
+            {
+                options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 100,
+                            Window = TimeSpan.FromMinutes(1)
+                        }));
+
+                options.OnRejected = async (context, token) =>
+                {
+                    context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                    await context.HttpContext.Response.WriteAsync("Too many requests. Please slow down.", token);
+                };
+
+                options.AddPolicy("auth", context =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 5,
+                            Window = TimeSpan.FromMinutes(1)
+                        }));
+            });
+
+            builder.Services.AddHangfire(config => config
+                .SetDataCompatibilityLevel(Hangfire.CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            builder.Services.AddHangfireServer();
+
             builder.Services.AddSignalR();
             builder.Services.AddScoped<PointsService>();
             builder.Services.AddHostedService<ReminderBackgroundService>();
             builder.Services.AddScoped<BadgeService>();
+            builder.Services.AddScoped<AuditService>();
+            builder.Services.AddMemoryCache();
+            builder.Services.AddScoped<FishIdSuggestionService>();
+            builder.Services.AddScoped<BiteAlertCleanupJob>();
 
             var app = builder.Build();
+
+            app.UseSerilogRequestLogging();
 
             using (var scope = app.Services.CreateScope())
             {
@@ -55,7 +111,6 @@ namespace AquaDex.Api
 
 
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
@@ -70,8 +125,21 @@ namespace AquaDex.Api
             app.UseStaticFiles();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.MapControllers();
+            app.UseRateLimiter();
 
+
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                Authorization = new[] { new HangfireAdminAuthFilter() }
+            });
+
+            RecurringJob.AddOrUpdate<BiteAlertCleanupJob>(
+            "cleanup-expired-bite-alerts",
+            job => job.RunAsync(),
+            Cron.Hourly
+            );
+
+            app.MapControllers();
             app.MapHub<AquaDex.Api.Hubs.ForumHub>("/hubs/forum");
 
 
@@ -80,34 +148,4 @@ namespace AquaDex.Api
         }
     }
 
-    public class ReminderBackgroundService : BackgroundService
-    {
-        private readonly ILogger<ReminderBackgroundService> _logger;
-
-        public ReminderBackgroundService(ILogger<ReminderBackgroundService> logger)
-        {
-            _logger = logger;
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                try
-                {
-                    // Your recurring task logic here
-                    _logger.LogInformation("ReminderBackgroundService is running.");
-
-                    // For example, send reminders or process tasks
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error occurred in ReminderBackgroundService.");
-                }
-
-                // Wait for a specific interval before executing the task again
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
-            }
-        }
-    }
 }

@@ -10,7 +10,8 @@ using Microsoft.EntityFrameworkCore;
 namespace AquaDex.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[Asp.Versioning.ApiVersion("1.0")]
 public class ExpertConsultationController : ControllerBase
 {
     private readonly AquaDexDbContext _context;

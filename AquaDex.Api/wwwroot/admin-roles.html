@@ -1,0 +1,277 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AquaDex — Role Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css">
+    <style>
+        .role-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .role-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .role-pill-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .role-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            padding: 6px 8px 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+            .role-pill.core {
+                border-color: var(--accent-soft);
+            }
+
+            .role-pill .delete-x {
+                cursor: pointer;
+                color: var(--text-secondary);
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.85rem;
+                transition: background 0.15s, color 0.15s;
+            }
+
+                .role-pill .delete-x:hover {
+                    background: var(--danger);
+                    color: white;
+                }
+
+            .role-pill.core .delete-x {
+                opacity: 0.25;
+                cursor: not-allowed;
+            }
+
+        .core-tag {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .user-search-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .user-role-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .mini-chip {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 8px;
+            background: rgba(79, 209, 197, 0.1);
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <header id="site-header"></header>
+    <div class="page-wrap">
+        <h1>Role Management</h1>
+        <p class="subtitle">Admin only — create roles and manage user permissions</p>
+
+        <div id="access-check"></div>
+
+        <div id="admin-content" style="display:none;">
+            <div class="role-grid">
+
+                <div class="card">
+                    <h2 style="font-size: 1.05rem; margin-bottom: 6px;">Roles</h2>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem;">Core roles cannot be deleted.</p>
+
+                    <div id="role-list" class="role-pill-list"></div>
+
+                    <form id="new-role-form" style="margin-top: 20px; display: flex; gap: 10px;">
+                        <input type="text" id="newRoleName" placeholder="New role name" style="flex:1;">
+                        <button type="submit" class="btn" style="white-space: nowrap;">+ Add Role</button>
+                    </form>
+                    <div id="role-msg"></div>
+                </div>
+
+                <div class="card">
+                    <h2 style="font-size: 1.05rem; margin-bottom: 14px;">Assign / Remove Role</h2>
+
+                    <div class="field-group">
+                        <label for="userIdInput">User ID</label>
+                        <input type="text" id="userIdInput" placeholder="Paste a user's Id">
+                    </div>
+                    <button id="lookup-btn" class="btn secondary" style="margin-bottom: 16px;">Look Up User</button>
+
+                    <div id="user-lookup-result"></div>
+
+                    <div id="assign-panel" style="display:none; margin-top: 16px;">
+                        <div class="field-group">
+                            <label for="roleSelect">Role</label>
+                            <select id="roleSelect"></select>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="assign-btn" class="btn" style="flex:1;">Assign</button>
+                            <button id="remove-btn" class="btn secondary" style="flex:1;">Remove</button>
+                        </div>
+                        <div id="assign-msg" style="margin-top: 12px;"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/shared-header.js"></script>
+    <script>
+    renderHeader('admin-roles.html');
+
+    const CORE_ROLES = ['Angler', 'VerifiedExpert', 'FishingGuide', 'ShopOwner', 'Admin'];
+    let currentUserId = null;
+
+    async function loadRoles() {
+      const roles = await apiRequest('/rolemanagement/roles');
+      const listEl = document.getElementById('role-list');
+      listEl.innerHTML = roles.map(r => {
+        const isCore = CORE_ROLES.includes(r.name);
+        return `
+          <div class="role-pill ${isCore ? 'core' : ''}">
+            ${r.name} ${isCore ? '<span class="core-tag">core</span>' : ''}
+            <span class="delete-x" data-role="${r.name}" data-core="${isCore}">✕</span>
+          </div>
+        `;
+      }).join('');
+
+      // Also populate the assign dropdown
+      const select = document.getElementById('roleSelect');
+      select.innerHTML = roles.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
+
+      listEl.querySelectorAll('.delete-x').forEach(x => {
+        x.addEventListener('click', async () => {
+          if (x.dataset.core === 'true') return; // core roles ignore clicks entirely
+          const roleMsg = document.getElementById('role-msg');
+          try {
+            await apiRequest(`/rolemanagement/roles/${x.dataset.role}`, { method: 'DELETE' });
+            roleMsg.innerHTML = `<div class="msg-box msg-success">Role deleted.</div>`;
+            await loadRoles();
+          } catch (err) {
+            roleMsg.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
+          }
+        });
+      });
+    }
+
+    document.getElementById('new-role-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const roleMsg = document.getElementById('role-msg');
+      const name = document.getElementById('newRoleName').value.trim();
+      if (!name) return;
+      try {
+        await apiRequest('/rolemanagement/roles', { method: 'POST', body: JSON.stringify({ name }) });
+        roleMsg.innerHTML = `<div class="msg-box msg-success">Role "${name}" created.</div>`;
+        document.getElementById('newRoleName').value = '';
+        await loadRoles();
+      } catch (err) {
+        roleMsg.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
+      }
+    });
+
+    document.getElementById('lookup-btn').addEventListener('click', async () => {
+      const userId = document.getElementById('userIdInput').value.trim();
+      const resultEl = document.getElementById('user-lookup-result');
+      const assignPanel = document.getElementById('assign-panel');
+      if (!userId) return;
+
+      try {
+        const userInfo = await apiRequest(`/rolemanagement/users/${userId}`);
+        currentUserId = userInfo.userId;
+        resultEl.innerHTML = `
+          <div class="user-search-result">
+            <div>
+              <div style="font-weight:600;">${userInfo.displayName}</div>
+              <div class="user-role-tags">${userInfo.roles.map(r => `<span class="mini-chip">${r}</span>`).join('')}</div>
+            </div>
+          </div>
+        `;
+        assignPanel.style.display = 'block';
+      } catch (err) {
+        resultEl.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
+        assignPanel.style.display = 'none';
+      }
+    });
+
+    async function refreshLookup() {
+      if (!currentUserId) return;
+      document.getElementById('userIdInput').value = currentUserId;
+      document.getElementById('lookup-btn').click();
+    }
+
+    document.getElementById('assign-btn').addEventListener('click', async () => {
+      const msg = document.getElementById('assign-msg');
+      const roleName = document.getElementById('roleSelect').value;
+      try {
+        await apiRequest('/rolemanagement/assign', { method: 'POST', body: JSON.stringify({ userId: currentUserId, roleName }) });
+        msg.innerHTML = `<div class="msg-box msg-success">Assigned.</div>`;
+        await refreshLookup();
+      } catch (err) {
+        msg.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
+      }
+    });
+
+    document.getElementById('remove-btn').addEventListener('click', async () => {
+      const msg = document.getElementById('assign-msg');
+      const roleName = document.getElementById('roleSelect').value;
+      try {
+        await apiRequest('/rolemanagement/remove', { method: 'POST', body: JSON.stringify({ userId: currentUserId, roleName }) });
+        msg.innerHTML = `<div class="msg-box msg-success">Removed.</div>`;
+        await refreshLookup();
+      } catch (err) {
+        msg.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
+      }
+    });
+
+    (async () => {
+      const accessCheck = document.getElementById('access-check');
+      const adminContent = document.getElementById('admin-content');
+      try {
+        const user = await apiRequest('/auth/me');
+        if (!user.roles.includes('Admin')) {
+          accessCheck.innerHTML = `<div class="msg-box msg-error">Admin access required.</div>`;
+          return;
+        }
+        adminContent.style.display = 'block';
+        await loadRoles();
+      } catch {
+        accessCheck.innerHTML = `<div class="msg-box msg-error">You must be logged in as an Admin. <a href="login.html">Sign in</a></div>`;
+      }
+    })();
+    </script>
+</body>
+</html>

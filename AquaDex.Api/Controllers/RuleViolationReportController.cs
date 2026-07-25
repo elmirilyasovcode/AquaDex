@@ -3,6 +3,7 @@ using AquaDex.Core.Entities;
 using AquaDex.Core.Enums;
 using AquaDex.Core.Helpers;
 using AquaDex.Infrastructure.Data;
+using AquaDex.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,16 +12,19 @@ using Microsoft.EntityFrameworkCore;
 namespace AquaDex.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[Asp.Versioning.ApiVersion("1.0")]
 public class RuleViolationReportController : ControllerBase
 {
     private readonly AquaDexDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly AuditService _auditService;
 
-    public RuleViolationReportController(AquaDexDbContext context, UserManager<ApplicationUser> userManager)
+    public RuleViolationReportController(AquaDexDbContext context, UserManager<ApplicationUser> userManager, AuditService auditService)
     {
         _context = context;
         _userManager = userManager;
+        _auditService = auditService;
     }
 
     // GET: api/ruleviolationreport  (Admin-only — this is sensitive moderation data)
@@ -117,6 +121,14 @@ public class RuleViolationReportController : ControllerBase
 
         report.Status = newStatus;
         await _context.SaveChangesAsync();
+
+        await _auditService.LogAsync(
+            _userManager.GetUserId(User)!,
+            "RuleViolationReport.StatusChanged",
+            "RuleViolationReport",
+            id.ToString(),
+            $"New status: {newStatus}"
+        );
 
         return Ok(MapToDto(report));
     }

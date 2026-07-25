@@ -4,33 +4,39 @@ using AquaDex.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace AquaDex.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[Asp.Versioning.ApiVersion("1.0")]
 public class WaterbodyController : ControllerBase
 {
     private readonly AquaDexDbContext _context;
+    private readonly IMemoryCache _cache;
+    private const string WaterbodyListCacheKey = "waterbody:all";
 
-    public WaterbodyController(AquaDexDbContext context)
+    public WaterbodyController(AquaDexDbContext context, IMemoryCache cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     // GET: api/waterbody
     [HttpGet]
     public async Task<ActionResult<IEnumerable<WaterbodyDto>>> GetAllWaterbodies()
     {
+        if (_cache.TryGetValue(WaterbodyListCacheKey, out List<WaterbodyDto>? cached))
+        {
+            return Ok(cached);
+        }
+
         var waterbodies = await _context.Waterbodies
-            .Select(w => new WaterbodyDto
-            {
-                Id = w.Id,
-                Name = w.Name,
-                Type = w.Type,
-                Region = w.Region
-            })
+            .Select(w => new WaterbodyDto { Id = w.Id, Name = w.Name, Type = w.Type, Region = w.Region })
             .ToListAsync();
+
+        _cache.Set(WaterbodyListCacheKey, waterbodies, TimeSpan.FromMinutes(10));
 
         return Ok(waterbodies);
     }
@@ -69,6 +75,7 @@ public class WaterbodyController : ControllerBase
 
         _context.Waterbodies.Add(waterbody);
         await _context.SaveChangesAsync();
+        _cache.Remove(WaterbodyListCacheKey);
 
         var resultDto = new WaterbodyDto
         {

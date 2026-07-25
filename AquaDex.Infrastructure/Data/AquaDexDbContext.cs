@@ -29,6 +29,7 @@ public class AquaDexDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<GuideListing> GuideListings { get; set; } = null!;
     public DbSet<GuideBooking> GuideBookings { get; set; } = null!;
     public DbSet<UserNotification> UserNotifications { get; set; } = null!;
+    public DbSet<AuditLogEntry> AuditLogEntries { get; set; } = null!;
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder); // IMPORTANT: must be called for Identity tables to be configured correctly

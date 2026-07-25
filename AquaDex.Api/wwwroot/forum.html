@@ -369,6 +369,9 @@
                   <div class="thread-body-text">${thread.body}</div>
                 </div>
 
+                <button id="ai-suggest-btn" class="btn secondary" style="margin: 12px 0 20px;">🤖 Get AI Suggestion</button>
+                <div id="ai-suggestion-result"></div>
+
                 <h2 style="font-size: 1.05rem; margin: 26px 0 14px;">${thread.replies.length} ${thread.replies.length === 1 ? 'Reply' : 'Replies'}</h2>
                 <div id="replies-list"></div>
 
@@ -413,6 +416,26 @@
                 } catch (err) {
                     msg.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
                 }
+            });
+
+            document.getElementById('ai-suggest-btn').addEventListener('click', async (e) => {
+                const btn = e.target;
+                const resultEl = document.getElementById('ai-suggestion-result');
+                btn.textContent = 'Thinking...';
+                btn.disabled = true;
+                try {
+                    const result = await apiRequest(`/forumthread/${thread.id}/ai-suggestion`);
+                    resultEl.innerHTML = `
+                      <div class="card" style="border-color: var(--accent); margin-bottom: 20px;">
+                        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-bottom: 8px;">🤖 AI SUGGESTION (not a substitute for expert verification)</div>
+                        <div>${result.suggestion}</div>
+                      </div>
+                    `;
+                } catch (err) {
+                    resultEl.innerHTML = `<div class="msg-box msg-error">AI suggestion unavailable right now.</div>`;
+                }
+                btn.textContent = '🤖 Get AI Suggestion';
+                btn.disabled = false;
             });
         }
 

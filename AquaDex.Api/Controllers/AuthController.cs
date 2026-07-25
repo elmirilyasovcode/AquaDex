@@ -2,11 +2,13 @@
 using AquaDex.Core.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace AquaDex.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[Asp.Versioning.ApiVersion("1.0")]
 public class AuthController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
@@ -18,8 +20,9 @@ public class AuthController : ControllerBase
         _signInManager = signInManager;
     }
 
-    // POST: api/auth/register
+   
     [HttpPost("register")]
+    [EnableRateLimiting("auth")]
     public async Task<ActionResult<AuthResponseDto>> Register(RegisterDto dto)
     {
         var existingUser = await _userManager.FindByEmailAsync(dto.Email);
@@ -38,15 +41,12 @@ public class AuthController : ControllerBase
 
         if (!result.Succeeded)
         {
-            // Identity gives detailed, specific errors (e.g. "password too short") — surface them directly
             var errors = result.Errors.Select(e => e.Description);
             return BadRequest(errors);
         }
 
-        // Every new registrant gets the default Angler role, per spec
         await _userManager.AddToRoleAsync(user, "Angler");
 
-        // Sign the user in immediately after registering (sets the auth cookie)
         await _signInManager.SignInAsync(user, isPersistent: false);
 
         var roles = await _userManager.GetRolesAsync(user);
@@ -60,8 +60,8 @@ public class AuthController : ControllerBase
         });
     }
 
-    // POST: api/auth/login
     [HttpPost("login")]
+    [EnableRateLimiting("auth")]
     public async Task<ActionResult<AuthResponseDto>> Login(LoginDto dto)
     {
         var user = await _userManager.FindByEmailAsync(dto.Email);
@@ -84,7 +84,6 @@ public class AuthController : ControllerBase
         });
     }
 
-    // POST: api/auth/logout
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
@@ -92,7 +91,6 @@ public class AuthController : ControllerBase
         return Ok();
     }
 
-    // GET: api/auth/me
     [HttpGet("me")]
     public async Task<ActionResult<AuthResponseDto>> GetCurrentUser()
     {
