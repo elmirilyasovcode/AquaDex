@@ -21,8 +21,7 @@ public class RoleManagementController : ControllerBase
         _userManager = userManager;
     }
 
-    // GET: api/v1/rolemanagement/roles
-    [HttpGet("roles")]
+        [HttpGet("roles")]
     public IActionResult GetAllRoles()
     {
         var roles = _roleManager.Roles
@@ -31,8 +30,7 @@ public class RoleManagementController : ControllerBase
         return Ok(roles);
     }
 
-    // POST: api/v1/rolemanagement/roles
-    [HttpPost("roles")]
+        [HttpPost("roles")]
     public async Task<IActionResult> CreateRole(CreateRoleDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Name))
@@ -49,13 +47,10 @@ public class RoleManagementController : ControllerBase
         return Ok(new { message = $"Role '{dto.Name}' created." });
     }
 
-    // DELETE: api/v1/rolemanagement/roles/{roleName}
-    [HttpDelete("roles/{roleName}")]
+        [HttpDelete("roles/{roleName}")]
     public async Task<IActionResult> DeleteRole(string roleName)
     {
-        // Protect the 5 core roles your app depends on from accidental deletion —
-        // deleting these would break existing [Authorize(Roles=...)] checks throughout the app
-        var protectedRoles = new[] { "Angler", "VerifiedExpert", "FishingGuide", "ShopOwner", "Admin" };
+                        var protectedRoles = new[] { "Angler", "VerifiedExpert", "FishingGuide", "ShopOwner", "Admin" };
         if (protectedRoles.Contains(roleName))
             return BadRequest($"'{roleName}' is a core system role and cannot be deleted.");
 
@@ -67,8 +62,7 @@ public class RoleManagementController : ControllerBase
         return Ok(new { message = $"Role '{roleName}' deleted." });
     }
 
-    // POST: api/v1/rolemanagement/assign
-    [HttpPost("assign")]
+        [HttpPost("assign")]
     public async Task<IActionResult> AssignRole(AssignRoleDto dto)
     {
         var user = await _userManager.FindByIdAsync(dto.UserId);
@@ -90,8 +84,7 @@ public class RoleManagementController : ControllerBase
         return Ok(new { message = $"Role '{dto.RoleName}' assigned to user." });
     }
 
-    // POST: api/v1/rolemanagement/remove
-    [HttpPost("remove")]
+        [HttpPost("remove")]
     public async Task<IActionResult> RemoveRole(AssignRoleDto dto)
     {
         var user = await _userManager.FindByIdAsync(dto.UserId);
@@ -109,8 +102,7 @@ public class RoleManagementController : ControllerBase
         return Ok(new { message = $"Role '{dto.RoleName}' removed from user." });
     }
 
-    // GET: api/v1/rolemanagement/users/{userId}
-    [HttpGet("users/{userId}")]
+        [HttpGet("users/{userId}")]
     public async Task<IActionResult> GetUserRoles(string userId)
     {
         var user = await _userManager.FindByIdAsync(userId);

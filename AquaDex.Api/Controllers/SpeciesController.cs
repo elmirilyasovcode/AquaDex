@@ -24,8 +24,7 @@ public class SpeciesController : ControllerBase
         _cache = cache;
     }
 
-    // GET: api/species
-    [HttpGet]
+        [HttpGet]
     public async Task<ActionResult<IEnumerable<SpeciesDto>>> GetAllSpecies()
     {
         if (_cache.TryGetValue(SpeciesListCacheKey, out List<SpeciesDto>? cached))
@@ -56,8 +55,7 @@ public class SpeciesController : ControllerBase
         return Ok(species);
     }
 
-    // GET: api/species/5
-    [HttpGet("{id}")]
+        [HttpGet("{id}")]
     public async Task<ActionResult<SpeciesDto>> GetSpeciesById(int id)
     {
         var species = await _context.Species.FindAsync(id);
@@ -84,8 +82,7 @@ public class SpeciesController : ControllerBase
         return Ok(dto);
     }
 
-    // POST: api/species
-    [HttpPost]
+        [HttpPost]
     [Authorize(Roles = "VerifiedExpert,Admin")]
     public async Task<ActionResult<SpeciesDto>> CreateSpecies(CreateSpeciesDto dto)
     {
@@ -127,8 +124,7 @@ public class SpeciesController : ControllerBase
         return CreatedAtAction(nameof(GetSpeciesById), new { id = species.Id }, resultDto);
     }
 
-    // GET: api/species/search?habitatType=1&conservationStatus=4&nameContains=stur
-    [HttpGet("search")]
+        [HttpGet("search")]
     public async Task<ActionResult<IEnumerable<SpeciesDto>>> SearchSpecies(
         [FromQuery] HabitatType? habitatType,
         [FromQuery] ConservationStatus? conservationStatus,

@@ -6,7 +6,8 @@
         { href: 'waterbodies.html', label: 'Waterbodies' },
         { href: 'forum.html', label: 'Forum' },
         { href: 'report.html', label: 'Report' },
-        { href: 'profile.html', label: 'Profile' }
+        { href: 'profile.html', label: 'Profile' },
+        { href: 'bookings.html', label: 'Bookings' }
     ];
 
     const navHtml = nav.map(item =>
@@ -21,8 +22,7 @@
     </div>
   `;
 
-    // Scroll-aware blur/shadow — now applies on every page, not just index.html
-    window.addEventListener('scroll', () => {
+        window.addEventListener('scroll', () => {
         const header = document.getElementById('site-header');
         if (window.scrollY > 12) header.classList.add('scrolled');
         else header.classList.remove('scrolled');
@@ -55,8 +55,7 @@
                     window.location.href = 'login.html';
                 });
 
-                // Add Admin link into the nav if this user has the Admin role
-                if (user.roles.includes('Admin')) {
+                                if (user.roles.includes('Admin')) {
                     const navLinksEl = document.querySelector('.nav-links');
                     const adminLink = document.createElement('a');
                     adminLink.href = 'admin-roles.html';

@@ -27,7 +27,6 @@ namespace AquaDex.Core.Entities
 
         public string? PhotoUrl { get; set; }
 
-        // Navigation property — one Species can appear in many Waterbodies
-        public ICollection<SpeciesWaterbody> SpeciesWaterbodies { get; set; } = new List<SpeciesWaterbody>();
+                public ICollection<SpeciesWaterbody> SpeciesWaterbodies { get; set; } = new List<SpeciesWaterbody>();
     }
 }

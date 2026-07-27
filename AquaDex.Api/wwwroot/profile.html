@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>AquaDex — Profile</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/theme.css">
 </head>
 <body>
@@ -22,8 +22,7 @@
         (async () => {
             const content = document.getElementById('profile-content');
 
-            // Step 1: check auth specifically. If THIS fails, show the login prompt.
-            let user;
+                        let user;
             try {
                 user = await apiRequest('/auth/me');
             } catch {
@@ -31,8 +30,7 @@
                 return;
             }
 
-            // Step 2: load everything else independently so one failure doesn't hide the rest
-            let myCatches = [];
+                        let myCatches = [];
             let discoveredIds = [];
             let allSpecies = [];
             let pointsSummary = { totalPoints: 0, recentTransactions: [] };

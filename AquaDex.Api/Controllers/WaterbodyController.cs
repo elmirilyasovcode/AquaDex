@@ -23,8 +23,7 @@ public class WaterbodyController : ControllerBase
         _cache = cache;
     }
 
-    // GET: api/waterbody
-    [HttpGet]
+        [HttpGet]
     public async Task<ActionResult<IEnumerable<WaterbodyDto>>> GetAllWaterbodies()
     {
         if (_cache.TryGetValue(WaterbodyListCacheKey, out List<WaterbodyDto>? cached))
@@ -41,8 +40,7 @@ public class WaterbodyController : ControllerBase
         return Ok(waterbodies);
     }
 
-    // GET: api/waterbody/5
-    [HttpGet("{id}")]
+        [HttpGet("{id}")]
     public async Task<ActionResult<WaterbodyDto>> GetWaterbodyById(int id)
     {
         var waterbody = await _context.Waterbodies.FindAsync(id);
@@ -61,8 +59,7 @@ public class WaterbodyController : ControllerBase
         return Ok(dto);
     }
 
-    // POST: api/waterbody
-    [HttpPost]
+        [HttpPost]
     [Authorize(Roles = "VerifiedExpert,Admin")]
     public async Task<ActionResult<WaterbodyDto>> CreateWaterbody(CreateWaterbodyDto dto)
     {

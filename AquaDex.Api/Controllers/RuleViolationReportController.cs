@@ -27,8 +27,7 @@ public class RuleViolationReportController : ControllerBase
         _auditService = auditService;
     }
 
-    // GET: api/ruleviolationreport  (Admin-only — this is sensitive moderation data)
-    [HttpGet]
+        [HttpGet]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<RuleViolationReportDto>>> GetAllReports()
     {
@@ -41,9 +40,7 @@ public class RuleViolationReportController : ControllerBase
         return Ok(reports.Select(MapToDto).ToList());
     }
 
-    // GET: api/ruleviolationreport/nearby?latitude=..&longitude=..&radiusKm=25
-    // Public — this is the "protected species / violation nearby" alert feed
-    [HttpGet("nearby")]
+            [HttpGet("nearby")]
     public async Task<ActionResult<IEnumerable<RuleViolationReportDto>>> GetNearbyReports(
     [FromQuery] double latitude,
     [FromQuery] double longitude,
@@ -67,8 +64,7 @@ public class RuleViolationReportController : ControllerBase
         return Ok(nearby.Select(MapToDto).ToList());
     }
 
-    // POST: api/ruleviolationreport
-    [HttpPost]
+        [HttpPost]
     [Authorize]
     public async Task<ActionResult<RuleViolationReportDto>> CreateReport(CreateRuleViolationReportDto dto)
     {
@@ -106,8 +102,7 @@ public class RuleViolationReportController : ControllerBase
         return CreatedAtAction(nameof(GetAllReports), new { id = report.Id }, MapToDto(report));
     }
 
-    // PATCH: api/ruleviolationreport/5/status  (Admin reviews and updates status)
-    [HttpPatch("{id}/status")]
+        [HttpPatch("{id}/status")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<RuleViolationReportDto>> UpdateStatus(int id, [FromBody] ReportStatus newStatus)
     {

@@ -13,8 +13,7 @@ public class ReminderBackgroundService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<ReminderBackgroundService> _logger;
 
-    // Checking every 6 hours is reasonable for reminders — no need for anything faster
-    private readonly TimeSpan _interval = TimeSpan.FromHours(6);
+        private readonly TimeSpan _interval = TimeSpan.FromHours(6);
 
     public ReminderBackgroundService(IServiceProvider serviceProvider, ILogger<ReminderBackgroundService> logger)
     {
@@ -32,9 +31,7 @@ public class ReminderBackgroundService : BackgroundService
             }
             catch (Exception ex)
             {
-                // A failed reminder run should never crash the whole application —
-                // log it and try again next cycle instead
-                _logger.LogError(ex, "Reminder generation failed");
+                                                _logger.LogError(ex, "Reminder generation failed");
             }
 
             await Task.Delay(_interval, stoppingToken);
@@ -43,9 +40,7 @@ public class ReminderBackgroundService : BackgroundService
 
     private async Task GenerateRemindersAsync()
     {
-        // BackgroundService is a singleton, but DbContext is scoped — we must create
-        // a new scope manually to get a DbContext instance, rather than injecting one directly
-        using var scope = _serviceProvider.CreateScope();
+                        using var scope = _serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AquaDexDbContext>();
 
         await GenerateMissingCodexRemindersAsync(context);
@@ -68,14 +63,10 @@ public class ReminderBackgroundService : BackgroundService
                 .Distinct()
                 .CountAsync();
 
-            // Only remind users who are meaningfully engaged (have caught at least one fish)
-            // but haven't completed the Codex — avoids spamming brand-new accounts
-            if (discoveredCount == 0 || discoveredCount >= totalSpeciesCount)
+                                    if (discoveredCount == 0 || discoveredCount >= totalSpeciesCount)
                 continue;
 
-            // Avoid duplicate reminders — only create one if the user doesn't already have
-            // an unread MissingCodexSpecies notification from the last 7 days
-            var recentReminderExists = await context.UserNotifications
+                                    var recentReminderExists = await context.UserNotifications
                 .AnyAsync(n => n.UserId == user.Id
                     && n.Type == NotificationType.MissingCodexSpecies
                     && n.CreatedAt > DateTime.UtcNow.AddDays(-7));

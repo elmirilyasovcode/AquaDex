@@ -244,6 +244,8 @@ public class ForumThreadController : ControllerBase
         await _context.SaveChangesAsync();
         await _pointsService.AwardPointsAsync(userId, PointsReason.ForumReplyPosted, reply.Id);
 
+        await _context.Entry(reply).Reference(r => r.AuthorUser).LoadAsync();
+
         var replyDto = new ForumReplyDto
         {
             Id = reply.Id,
@@ -260,7 +262,7 @@ public class ForumThreadController : ControllerBase
 
         return Ok(replyDto);
 
-        
+
     }
     // POST: api/forumthread/reply/5/vote
     [HttpPost("reply/{replyId}/vote")]

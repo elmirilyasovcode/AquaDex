@@ -23,7 +23,6 @@ public class GuideBookingController : ControllerBase
         _userManager = userManager;
     }
 
-    // GET: api/guidebooking/mine  — as requester
     [HttpGet("mine")]
     [Authorize]
     public async Task<ActionResult<IEnumerable<GuideBookingDto>>> GetMyBookings()
@@ -39,7 +38,6 @@ public class GuideBookingController : ControllerBase
         return Ok(bookings.Select(MapToDto).ToList());
     }
 
-    // GET: api/guidebooking/incoming  — as the guide who owns the listing
     [HttpGet("incoming")]
     [Authorize(Roles = "FishingGuide,Admin")]
     public async Task<ActionResult<IEnumerable<GuideBookingDto>>> GetIncomingBookings()
@@ -55,7 +53,6 @@ public class GuideBookingController : ControllerBase
         return Ok(bookings.Select(MapToDto).ToList());
     }
 
-    // POST: api/guidebooking
     [HttpPost]
     [Authorize]
     public async Task<ActionResult<GuideBookingDto>> CreateBooking(CreateGuideBookingDto dto)
@@ -86,7 +83,6 @@ public class GuideBookingController : ControllerBase
         return Ok(MapToDto(booking));
     }
 
-    // PATCH: api/guidebooking/5/status  — guide confirms/declines
     [HttpPatch("{id}/status")]
     [Authorize(Roles = "FishingGuide,Admin")]
     public async Task<ActionResult<GuideBookingDto>> UpdateStatus(int id, [FromBody] BookingStatus newStatus)
@@ -122,5 +118,18 @@ public class GuideBookingController : ControllerBase
             Notes = b.Notes,
             CreatedAt = b.CreatedAt
         };
+    }
+
+    [HttpGet("all")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<IEnumerable<GuideBookingDto>>> GetAllBookings()
+    {
+        var bookings = await _context.GuideBookings
+            .Include(b => b.Listing)
+            .Include(b => b.RequesterUser)
+            .OrderByDescending(b => b.CreatedAt)
+            .ToListAsync();
+
+        return Ok(bookings.Select(MapToDto).ToList());
     }
 }

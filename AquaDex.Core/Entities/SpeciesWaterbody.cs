@@ -14,7 +14,6 @@ namespace AquaDex.Core.Entities
         public int WaterbodyId { get; set; }
         public Waterbody Waterbody { get; set; } = null!;
 
-        public int AbundanceRating { get; set; } // 1-5
-        public string SeasonNotes { get; set; } = string.Empty;
+        public int AbundanceRating { get; set; }         public string SeasonNotes { get; set; } = string.Empty;
     }
 }

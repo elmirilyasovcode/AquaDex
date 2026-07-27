@@ -24,8 +24,7 @@ public class UserNotificationController : ControllerBase
         _userManager = userManager;
     }
 
-    // GET: api/usernotification
-    [HttpGet]
+        [HttpGet]
     public async Task<ActionResult<IEnumerable<UserNotificationDto>>> GetMyNotifications()
     {
         var userId = _userManager.GetUserId(User);
@@ -45,8 +44,7 @@ public class UserNotificationController : ControllerBase
         }).ToList());
     }
 
-    // PATCH: api/usernotification/5/read
-    [HttpPatch("{id}/read")]
+        [HttpPatch("{id}/read")]
     public async Task<IActionResult> MarkAsRead(int id)
     {
         var userId = _userManager.GetUserId(User);

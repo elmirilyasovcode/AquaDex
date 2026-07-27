@@ -23,7 +23,6 @@ public class ExpertConsultationController : ControllerBase
         _userManager = userManager;
     }
 
-    // GET: api/expertconsultation/experts  — list available experts to request from
     [HttpGet("experts")]
     public async Task<ActionResult<IEnumerable<object>>> GetAvailableExperts()
     {
@@ -31,7 +30,6 @@ public class ExpertConsultationController : ControllerBase
         return Ok(experts.Select(e => new { userId = e.Id, displayName = e.DisplayName }));
     }
 
-    // GET: api/expertconsultation/mine  — as requester
     [HttpGet("mine")]
     [Authorize]
     public async Task<ActionResult<IEnumerable<ExpertConsultationDto>>> GetMyRequests()
@@ -47,7 +45,6 @@ public class ExpertConsultationController : ControllerBase
         return Ok(consultations.Select(MapToDto).ToList());
     }
 
-    // GET: api/expertconsultation/incoming  — as expert
     [HttpGet("incoming")]
     [Authorize(Roles = "VerifiedExpert,Admin")]
     public async Task<ActionResult<IEnumerable<ExpertConsultationDto>>> GetIncomingRequests()
@@ -63,7 +60,6 @@ public class ExpertConsultationController : ControllerBase
         return Ok(consultations.Select(MapToDto).ToList());
     }
 
-    // POST: api/expertconsultation
     [HttpPost]
     [Authorize]
     public async Task<ActionResult<ExpertConsultationDto>> CreateRequest(CreateConsultationDto dto)
@@ -97,7 +93,6 @@ public class ExpertConsultationController : ControllerBase
         return Ok(MapToDto(consultation));
     }
 
-    // PATCH: api/expertconsultation/5/respond  — expert accepts/declines/completes
     [HttpPatch("{id}/respond")]
     [Authorize(Roles = "VerifiedExpert,Admin")]
     public async Task<ActionResult<ExpertConsultationDto>> Respond(int id, RespondToConsultationDto dto)
@@ -136,5 +131,18 @@ public class ExpertConsultationController : ControllerBase
             RespondedAt = c.RespondedAt,
             ExpertResponse = c.ExpertResponse
         };
+    }
+
+    [HttpGet("all")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<IEnumerable<ExpertConsultationDto>>> GetAllConsultations()
+    {
+        var consultations = await _context.ExpertConsultations
+            .Include(c => c.RequesterUser)
+            .Include(c => c.ExpertUser)
+            .OrderByDescending(c => c.RequestedAt)
+            .ToListAsync();
+
+        return Ok(consultations.Select(MapToDto).ToList());
     }
 }

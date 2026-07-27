@@ -305,8 +305,7 @@
     <script>
         renderHeader('index.html');
 
-        // scroll-aware navbar
-        window.addEventListener('scroll', () => {
+                window.addEventListener('scroll', () => {
             const header = document.getElementById('site-header');
             if (window.scrollY > 12) header.classList.add('scrolled');
             else header.classList.remove('scrolled');
