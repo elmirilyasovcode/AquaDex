@@ -47,3 +47,10 @@ async function uploadFile(file) {
 
     return response.json(); 
 }
+
+function applyStaggeredEntrance(selector, maxDelay = 0.5) {
+    document.querySelectorAll(selector).forEach((el, i) => {
+        el.setAttribute('data-animate', '');
+        el.style.animationDelay = `${Math.min(i * 0.05, maxDelay)}s`;
+    });
+}

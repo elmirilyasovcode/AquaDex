@@ -1,385 +1,378 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>AquaDex — Bookings</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/theme.css">
-  <style>
-    .tab-row { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
-    .tab-btn {
-      background: transparent; border: 1px solid var(--border); color: var(--text-secondary);
-      padding: 10px 18px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-weight: 500;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .tab-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(79,209,197,0.08); }
+    <meta charset="UTF-8">
+    <title>AquaDex — Bookings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css">
+    <style>
+        .tab-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
 
-    .booking-card { margin-bottom: 10px; }
-    .booking-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-    .booking-title { font-weight: 600; font-size: 0.95rem; }
-    .booking-meta { font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px; }
-    .booking-body { margin-top: 10px; font-size: 0.88rem; line-height: 1.5; }
+        .tab-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 10px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: border-color 0.15s, color 0.15s;
+        }
 
-    .status-pill {
-      font-size: 0.72rem; font-weight: 600; padding: 3px 10px; border-radius: 8px;
-      white-space: nowrap; text-transform: uppercase;
-    }
-    .status-pill.pending, .status-pill.requested { color: var(--warning); background: rgba(240,168,96,0.12); }
-    .status-pill.accepted, .status-pill.confirmed { color: #4fd18a; background: rgba(79,209,138,0.12); }
-    .status-pill.declined { color: var(--danger); background: rgba(224,85,79,0.12); }
-    .status-pill.completed, .status-pill.cancelled { color: var(--text-secondary); background: var(--bg-elevated); }
+            .tab-btn.active {
+                border-color: var(--accent);
+                color: var(--accent);
+                background: rgba(79,209,197,0.08);
+            }
 
-    .respond-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
-    .respond-row textarea { flex: 1; min-width: 200px; }
-  </style>
+        .booking-card {
+            margin-bottom: 10px;
+        }
+
+        .booking-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .booking-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .booking-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .booking-body {
+            margin-top: 10px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .status-pill {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 8px;
+            white-space: nowrap;
+            text-transform: uppercase;
+        }
+
+            .status-pill.pending, .status-pill.requested {
+                color: var(--warning);
+                background: rgba(240,168,96,0.12);
+            }
+
+            .status-pill.accepted, .status-pill.confirmed {
+                color: #4fd18a;
+                background: rgba(79,209,138,0.12);
+            }
+
+            .status-pill.declined {
+                color: var(--danger);
+                background: rgba(224,85,79,0.12);
+            }
+
+            .status-pill.completed, .status-pill.cancelled {
+                color: var(--text-secondary);
+                background: var(--bg-elevated);
+            }
+
+        .respond-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+            .respond-row textarea {
+                flex: 1;
+                min-width: 200px;
+            }
+    </style>
 </head>
 <body>
-  <header id="site-header"></header>
-  <div class="page-wrap">
-    <h1>Bookings</h1>
-    <p class="subtitle">Expert consultations and guide bookings</p>
+    <header id="site-header"></header>
+    <div class="page-wrap">
+        <h1>Bookings</h1>
+        <p class="subtitle">Expert consultations and guide bookings</p>
 
-    <div class="tab-row">
-        <button class="tab-btn active" data-tab="expert-request">Request Expert Help</button>
-        <button class="tab-btn" data-tab="expert-mine">My Consultation Requests</button>
-        <button class="tab-btn" data-tab="expert-incoming">Incoming (as Expert)</button>
-        <button class="tab-btn" data-tab="guide-request">Book a Guide</button>
-        <button class="tab-btn" data-tab="guide-mine">My Guide Bookings</button>
-        <button class="tab-btn" data-tab="guide-incoming">Incoming (as Guide)</button>
-        <button class="tab-btn admin-only" data-tab="expert-admin" style="display:none;">All Consultations (Admin)</button>
-        <button class="tab-btn admin-only" data-tab="guide-admin" style="display:none;">All Bookings (Admin)</button>
+        <div class="tab-row">
+            <button class="tab-btn active" data-tab="expert-request">Request Expert Help</button>
+            <button class="tab-btn" data-tab="expert-mine">My Consultation Requests</button>
+            <button class="tab-btn" data-tab="expert-incoming">Incoming (as Expert)</button>
+            <button class="tab-btn" data-tab="guide-request">Book a Guide</button>
+            <button class="tab-btn" data-tab="guide-mine">My Guide Bookings</button>
+            <button class="tab-btn" data-tab="guide-incoming">Incoming (as Guide)</button>
+        </div>
+
+        <div id="tab-content"></div>
     </div>
 
-    <div id="tab-content"></div>
-  </div>
+    <script src="js/api.js"></script>
+    <script src="js/shared-header.js"></script>
+    <script>
+        renderHeader('bookings.html');
 
-  <script src="js/api.js"></script>
-  <script src="js/shared-header.js"></script>
-  <script>
-    renderHeader('bookings.html');
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const contentEl = document.getElementById('tab-content');
 
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const contentEl = document.getElementById('tab-content');
-
-    tabButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        tabButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        loadTab(btn.dataset.tab);
-      });
-    });
-
-    function statusClass(status) {
-      return status.toLowerCase();
-    }
-
-    async function loadExpertRequestTab() {
-      contentEl.innerHTML = `<p class="empty-state">Loading experts...</p>`;
-      try {
-        const experts = await apiRequest('/expertconsultation/experts');
-        if (experts.length === 0) {
-          contentEl.innerHTML = `<div class="card empty-state">No Verified Experts available right now.</div>`;
-          return;
-        }
-        contentEl.innerHTML = `
-          <div class="card" style="max-width: 520px;">
-            <h2 style="font-size: 1rem; margin-bottom: 16px;">Request Expert Consultation</h2>
-            <div id="req-msg"></div>
-            <form id="expert-request-form">
-              <div class="field-group">
-                <label for="expertSelect">Expert</label>
-                <select id="expertSelect">${experts.map(e => `<option value="${e.userId}">${e.displayName}</option>`).join('')}</select>
-              </div>
-              <div class="field-group"><label for="subject">Subject</label><input type="text" id="subject" required></div>
-              <div class="field-group"><label for="question">Question</label><textarea id="question" rows="4" required></textarea></div>
-              <button type="submit" class="btn">Send Request</button>
-            </form>
-          </div>
-        `;
-        document.getElementById('expert-request-form').addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const msg = document.getElementById('req-msg');
-          try {
-            await apiRequest('/expertconsultation', {
-              method: 'POST',
-              body: JSON.stringify({
-                expertUserId: document.getElementById('expertSelect').value,
-                subject: document.getElementById('subject').value,
-                question: document.getElementById('question').value
-              })
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                loadTab(btn.dataset.tab);
             });
-            msg.innerHTML = `<div class="msg-box msg-success">Request sent.</div>`;
-            document.getElementById('expert-request-form').reset();
-          } catch (err) {
-            msg.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
-          }
         });
-      } catch (err) {
-        contentEl.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
-      }
-    }
 
-      async function loadExpertAdminTab() {
-          contentEl.innerHTML = `<p class="empty-state">Loading...</p>`;
-          try {
-              const list = await apiRequest('/expertconsultation/all');
-              if (list.length === 0) {
-                  contentEl.innerHTML = `<div class="card empty-state">No consultations exist yet.</div>`;
-                  return;
-              }
-              contentEl.innerHTML = list.map(c => renderConsultationCard(c, 'incoming')).join('');
-              document.querySelectorAll('.respond-accept').forEach(btn => {
-                  btn.addEventListener('click', () => respondToConsultationAsAdmin(btn.dataset.id, 1));
-              });
-              document.querySelectorAll('.respond-decline').forEach(btn => {
-                  btn.addEventListener('click', () => respondToConsultationAsAdmin(btn.dataset.id, 2));
-              });
-          } catch (err) {
-              contentEl.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
-          }
-      }
+        function statusClass(status) {
+            return status.toLowerCase();
+        }
 
-      async function respondToConsultationAsAdmin(id, statusValue) {
-          const textarea = document.querySelector(`.response-input[data-consult-id="${id}"]`);
-          const responseText = textarea ? textarea.value : '';
-          try {
-              await apiRequest(`/expertconsultation/${id}/respond`, {
-                  method: 'PATCH',
-                  body: JSON.stringify({ status: statusValue, expertResponse: responseText || null })
-              });
-              await loadExpertAdminTab();
-          } catch (err) {
-              alert(err.message);
-          }
-      }
-
-      async function loadGuideAdminTab() {
-          contentEl.innerHTML = `<p class="empty-state">Loading...</p>`;
-          try {
-              const list = await apiRequest('/guidebooking/all');
-              if (list.length === 0) {
-                  contentEl.innerHTML = `<div class="card empty-state">No bookings exist yet.</div>`;
-                  return;
-              }
-              contentEl.innerHTML = list.map(b => renderBookingCard(b, 'incoming')).join('');
-              document.querySelectorAll('.respond-confirm').forEach(btn => {
-                  btn.addEventListener('click', () => respondToBookingAsAdmin(btn.dataset.id, 1));
-              });
-              document.querySelectorAll('.respond-decline-booking').forEach(btn => {
-                  btn.addEventListener('click', () => respondToBookingAsAdmin(btn.dataset.id, 2));
-              });
-          } catch (err) {
-              contentEl.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
-          }
-      }
-
-      async function respondToBookingAsAdmin(id, statusValue) {
-          try {
-              await apiRequest(`/guidebooking/${id}/status`, {
-                  method: 'PATCH',
-                  body: JSON.stringify(statusValue)
-              });
-              await loadGuideAdminTab();
-          } catch (err) {
-              alert(err.message);
-          }
-      }
-
-    function renderConsultationCard(c, viewerRole) {
-      const canRespond = viewerRole === 'incoming' && c.status === 'Requested';
-      return `
-        <div class="card booking-card">
-          <div class="booking-head">
-            <div>
-              <div class="booking-title">${c.subject}</div>
-              <div class="booking-meta">
-                ${viewerRole === 'incoming' ? `From ${c.requesterDisplayName}` : `To ${c.expertDisplayName}`}
-                · ${new Date(c.requestedAt).toLocaleDateString('en-GB')}
+        // ---------------- Expert: Request ----------------
+        async function loadExpertRequestTab() {
+            contentEl.innerHTML = `<p class="empty-state">Loading experts...</p>`;
+            try {
+                const experts = await apiRequest('/expertconsultation/experts');
+                if (experts.length === 0) {
+                    contentEl.innerHTML = `<div class="card empty-state">No Verified Experts available right now.</div>`;
+                    return;
+                }
+                contentEl.innerHTML = `
+              <div class="card" style="max-width: 520px;">
+                <h2 style="font-size: 1rem; margin-bottom: 16px;">Request Expert Consultation</h2>
+                <div id="req-msg"></div>
+                <form id="expert-request-form">
+                  <div class="field-group">
+                    <label for="expertSelect">Expert</label>
+                    <select id="expertSelect">${experts.map(e => `<option value="${e.userId}">${e.displayName}</option>`).join('')}</select>
+                  </div>
+                  <div class="field-group"><label for="subject">Subject</label><input type="text" id="subject" required></div>
+                  <div class="field-group"><label for="question">Question</label><textarea id="question" rows="4" required></textarea></div>
+                  <button type="submit" class="btn">Send Request</button>
+                </form>
               </div>
-            </div>
-            <span class="status-pill ${statusClass(c.status)}">${c.status}</span>
-          </div>
-          <div class="booking-body">${c.question}</div>
-          ${c.expertResponse ? `<div class="booking-body" style="color: var(--accent);"><strong>Response:</strong> ${c.expertResponse}</div>` : ''}
-          ${canRespond ? `
-            <div class="respond-row">
-              <textarea placeholder="Your response (optional)..." data-consult-id="${c.id}" class="response-input" rows="2"></textarea>
-              <button class="btn respond-accept" data-id="${c.id}">Accept</button>
-              <button class="btn secondary respond-decline" data-id="${c.id}">Decline</button>
-            </div>
-          ` : ''}
-        </div>
-      `;
-    }
-
-    async function loadExpertList(endpoint, viewerRole) {
-      contentEl.innerHTML = `<p class="empty-state">Loading...</p>`;
-      try {
-        const list = await apiRequest(endpoint);
-        if (list.length === 0) {
-          contentEl.innerHTML = `<div class="card empty-state">Nothing here yet.</div>`;
-          return;
+            `;
+                document.getElementById('expert-request-form').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const msg = document.getElementById('req-msg');
+                    try {
+                        await apiRequest('/expertconsultation', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                expertUserId: document.getElementById('expertSelect').value,
+                                subject: document.getElementById('subject').value,
+                                question: document.getElementById('question').value
+                            })
+                        });
+                        msg.innerHTML = `<div class="msg-box msg-success">Request sent.</div>`;
+                        document.getElementById('expert-request-form').reset();
+                    } catch (err) {
+                        msg.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
+                    }
+                });
+            } catch (err) {
+                contentEl.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
+            }
         }
-        contentEl.innerHTML = list.map(c => renderConsultationCard(c, viewerRole)).join('');
 
-        if (viewerRole === 'incoming') {
-          document.querySelectorAll('.respond-accept').forEach(btn => {
-            btn.addEventListener('click', () => respondToConsultation(btn.dataset.id, 1));
-          });
-          document.querySelectorAll('.respond-decline').forEach(btn => {
-            btn.addEventListener('click', () => respondToConsultation(btn.dataset.id, 2));
-          });
-        }
-      } catch (err) {
-        contentEl.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
-      }
-    }
-
-    async function respondToConsultation(id, statusValue) {
-      const textarea = document.querySelector(`.response-input[data-consult-id="${id}"]`);
-      const responseText = textarea ? textarea.value : '';
-      try {
-        await apiRequest(`/expertconsultation/${id}/respond`, {
-          method: 'PATCH',
-          body: JSON.stringify({ status: statusValue, expertResponse: responseText || null })
-        });
-        await loadExpertList('/expertconsultation/incoming', 'incoming');
-      } catch (err) {
-        alert(err.message);
-      }
-    }
-
-    async function loadGuideRequestTab() {
-      contentEl.innerHTML = `<p class="empty-state">Loading guide listings...</p>`;
-      try {
-        const listings = await apiRequest('/guidelisting');
-        if (listings.length === 0) {
-          contentEl.innerHTML = `<div class="card empty-state">No guide listings available right now.</div>`;
-          return;
-        }
-        contentEl.innerHTML = `
-          <div class="card" style="max-width: 520px;">
-            <h2 style="font-size: 1rem; margin-bottom: 16px;">Book a Guide</h2>
-            <div id="booking-msg"></div>
-            <form id="guide-request-form">
-              <div class="field-group">
-                <label for="listingSelect">Listing</label>
-                <select id="listingSelect">${listings.map(l => `<option value="${l.id}">${l.title} — ${l.guideDisplayName} (${l.pricePerDay}/day)</option>`).join('')}</select>
+        // ---------------- Expert: Mine / Incoming (shared renderer) ----------------
+        function renderConsultationCard(c, viewerRole) {
+            const canRespond = viewerRole === 'incoming' && c.status === 'Requested';
+            return `
+            <div class="card booking-card">
+              <div class="booking-head">
+                <div>
+                  <div class="booking-title">${c.subject}</div>
+                  <div class="booking-meta">
+                    ${viewerRole === 'incoming' ? `From ${c.requesterDisplayName}` : `To ${c.expertDisplayName}`}
+                    · ${new Date(c.requestedAt).toLocaleDateString('en-GB')}
+                  </div>
+                </div>
+                <span class="status-pill ${statusClass(c.status)}">${c.status}</span>
               </div>
-              <div class="field-group"><label for="reqDate">Requested Date</label><input type="datetime-local" id="reqDate" required></div>
-              <div class="field-group"><label for="bookingNotes">Notes</label><textarea id="bookingNotes" rows="3"></textarea></div>
-              <button type="submit" class="btn">Send Booking Request</button>
-            </form>
-          </div>
-        `;
-        document.getElementById('guide-request-form').addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const msg = document.getElementById('booking-msg');
-          try {
-            await apiRequest('/guidebooking', {
-              method: 'POST',
-              body: JSON.stringify({
-                listingId: parseInt(document.getElementById('listingSelect').value),
-                requestedDate: new Date(document.getElementById('reqDate').value).toISOString(),
-                notes: document.getElementById('bookingNotes').value || null
-              })
-            });
-            msg.innerHTML = `<div class="msg-box msg-success">Booking request sent.</div>`;
-            document.getElementById('guide-request-form').reset();
-          } catch (err) {
-            msg.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
-          }
-        });
-      } catch (err) {
-        contentEl.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
-      }
-    }
+              <div class="booking-body">${c.question}</div>
+              ${c.expertResponse ? `<div class="booking-body" style="color: var(--accent);"><strong>Response:</strong> ${c.expertResponse}</div>` : ''}
+              ${canRespond ? `
+                <div class="respond-row">
+                  <textarea placeholder="Your response (optional)..." data-consult-id="${c.id}" class="response-input" rows="2"></textarea>
+                  <button class="btn respond-accept" data-id="${c.id}">Accept</button>
+                  <button class="btn secondary respond-decline" data-id="${c.id}">Decline</button>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }
 
-    function renderBookingCard(b, viewerRole) {
-      const canRespond = viewerRole === 'incoming' && b.status === 'Requested';
-      return `
-        <div class="card booking-card">
-          <div class="booking-head">
-            <div>
-              <div class="booking-title">${b.listingTitle}</div>
-              <div class="booking-meta">
-                ${viewerRole === 'incoming' ? `From ${b.requesterDisplayName}` : ''}
-                · Requested for ${new Date(b.requestedDate).toLocaleDateString('en-GB')}
+        async function loadExpertList(endpoint, viewerRole) {
+            contentEl.innerHTML = `<p class="empty-state">Loading...</p>`;
+            try {
+                const list = await apiRequest(endpoint);
+                if (list.length === 0) {
+                    contentEl.innerHTML = `<div class="card empty-state">Nothing here yet.</div>`;
+                    return;
+                }
+                contentEl.innerHTML = list.map(c => renderConsultationCard(c, viewerRole)).join('');
+
+                if (viewerRole === 'incoming') {
+                    document.querySelectorAll('.respond-accept').forEach(btn => {
+                        btn.addEventListener('click', () => respondToConsultation(btn.dataset.id, 1));
+                    });
+                    document.querySelectorAll('.respond-decline').forEach(btn => {
+                        btn.addEventListener('click', () => respondToConsultation(btn.dataset.id, 2));
+                    });
+                }
+            } catch (err) {
+                contentEl.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
+            }
+        }
+
+        async function respondToConsultation(id, statusValue) {
+            const textarea = document.querySelector(`.response-input[data-consult-id="${id}"]`);
+            const responseText = textarea ? textarea.value : '';
+            try {
+                await apiRequest(`/expertconsultation/${id}/respond`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: statusValue, expertResponse: responseText || null })
+                });
+                await loadExpertList('/expertconsultation/incoming', 'incoming');
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // ---------------- Guide: Request ----------------
+        async function loadGuideRequestTab() {
+            contentEl.innerHTML = `<p class="empty-state">Loading guide listings...</p>`;
+            try {
+                const listings = await apiRequest('/guidelisting');
+                if (listings.length === 0) {
+                    contentEl.innerHTML = `<div class="card empty-state">No guide listings available right now.</div>`;
+                    return;
+                }
+                contentEl.innerHTML = `
+              <div class="card" style="max-width: 520px;">
+                <h2 style="font-size: 1rem; margin-bottom: 16px;">Book a Guide</h2>
+                <div id="booking-msg"></div>
+                <form id="guide-request-form">
+                  <div class="field-group">
+                    <label for="listingSelect">Listing</label>
+                    <select id="listingSelect">${listings.map(l => `<option value="${l.id}">${l.title} — ${l.guideDisplayName} (${l.pricePerDay}/day)</option>`).join('')}</select>
+                  </div>
+                  <div class="field-group"><label for="reqDate">Requested Date</label><input type="datetime-local" id="reqDate" required></div>
+                  <div class="field-group"><label for="bookingNotes">Notes</label><textarea id="bookingNotes" rows="3"></textarea></div>
+                  <button type="submit" class="btn">Send Booking Request</button>
+                </form>
               </div>
-            </div>
-            <span class="status-pill ${statusClass(b.status)}">${b.status}</span>
-          </div>
-          ${b.notes ? `<div class="booking-body">${b.notes}</div>` : ''}
-          ${canRespond ? `
-            <div class="respond-row">
-              <button class="btn respond-confirm" data-id="${b.id}">Confirm</button>
-              <button class="btn secondary respond-decline-booking" data-id="${b.id}">Decline</button>
-            </div>
-          ` : ''}
-        </div>
-      `;
-    }
-
-    async function loadGuideList(endpoint, viewerRole) {
-      contentEl.innerHTML = `<p class="empty-state">Loading...</p>`;
-      try {
-        const list = await apiRequest(endpoint);
-        if (list.length === 0) {
-          contentEl.innerHTML = `<div class="card empty-state">Nothing here yet.</div>`;
-          return;
+            `;
+                document.getElementById('guide-request-form').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const msg = document.getElementById('booking-msg');
+                    try {
+                        await apiRequest('/guidebooking', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                listingId: parseInt(document.getElementById('listingSelect').value),
+                                requestedDate: new Date(document.getElementById('reqDate').value).toISOString(),
+                                notes: document.getElementById('bookingNotes').value || null
+                            })
+                        });
+                        msg.innerHTML = `<div class="msg-box msg-success">Booking request sent.</div>`;
+                        document.getElementById('guide-request-form').reset();
+                    } catch (err) {
+                        msg.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
+                    }
+                });
+            } catch (err) {
+                contentEl.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
+            }
         }
-        contentEl.innerHTML = list.map(b => renderBookingCard(b, viewerRole)).join('');
 
-        if (viewerRole === 'incoming') {
-          document.querySelectorAll('.respond-confirm').forEach(btn => {
-            btn.addEventListener('click', () => respondToBooking(btn.dataset.id, 1));
-          });
-          document.querySelectorAll('.respond-decline-booking').forEach(btn => {
-            btn.addEventListener('click', () => respondToBooking(btn.dataset.id, 2));
-          });
+        // ---------------- Guide: Mine / Incoming ----------------
+        function renderBookingCard(b, viewerRole) {
+            const canRespond = viewerRole === 'incoming' && b.status === 'Requested';
+            return `
+            <div class="card booking-card">
+              <div class="booking-head">
+                <div>
+                  <div class="booking-title">${b.listingTitle}</div>
+                  <div class="booking-meta">
+                    ${viewerRole === 'incoming' ? `From ${b.requesterDisplayName}` : ''}
+                    · Requested for ${new Date(b.requestedDate).toLocaleDateString('en-GB')}
+                  </div>
+                </div>
+                <span class="status-pill ${statusClass(b.status)}">${b.status}</span>
+              </div>
+              ${b.notes ? `<div class="booking-body">${b.notes}</div>` : ''}
+              ${canRespond ? `
+                <div class="respond-row">
+                  <button class="btn respond-confirm" data-id="${b.id}">Confirm</button>
+                  <button class="btn secondary respond-decline-booking" data-id="${b.id}">Decline</button>
+                </div>
+              ` : ''}
+            </div>
+          `;
         }
-      } catch (err) {
-        contentEl.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
-      }
-    }
 
-    async function respondToBooking(id, statusValue) {
-      try {
-        await apiRequest(`/guidebooking/${id}/status`, {
-          method: 'PATCH',
-          body: JSON.stringify(statusValue)
-        });
-        await loadGuideList('/guidebooking/incoming', 'incoming');
-      } catch (err) {
-        alert(err.message);
-      }
-    }
+        async function loadGuideList(endpoint, viewerRole) {
+            contentEl.innerHTML = `<p class="empty-state">Loading...</p>`;
+            try {
+                const list = await apiRequest(endpoint);
+                if (list.length === 0) {
+                    contentEl.innerHTML = `<div class="card empty-state">Nothing here yet.</div>`;
+                    return;
+                }
+                contentEl.innerHTML = list.map(b => renderBookingCard(b, viewerRole)).join('');
 
-      function loadTab(tab) {
-          switch (tab) {
-              case 'expert-request': return loadExpertRequestTab();
-              case 'expert-mine': return loadExpertList('/expertconsultation/mine', 'mine');
-              case 'expert-incoming': return loadExpertList('/expertconsultation/incoming', 'incoming');
-              case 'expert-admin': return loadExpertAdminTab();
-              case 'guide-request': return loadGuideRequestTab();
-              case 'guide-mine': return loadGuideList('/guidebooking/mine', 'mine');
-              case 'guide-incoming': return loadGuideList('/guidebooking/incoming', 'incoming');
-              case 'guide-admin': return loadGuideAdminTab();
-          }
-      }
+                if (viewerRole === 'incoming') {
+                    document.querySelectorAll('.respond-confirm').forEach(btn => {
+                        btn.addEventListener('click', () => respondToBooking(btn.dataset.id, 1));
+                    });
+                    document.querySelectorAll('.respond-decline-booking').forEach(btn => {
+                        btn.addEventListener('click', () => respondToBooking(btn.dataset.id, 2));
+                    });
+                }
+            } catch (err) {
+                contentEl.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
+            }
+        }
 
-      (async () => {
-          try {
-              const user = await apiRequest('/auth/me');
-              if (user.roles.includes('Admin')) {
-                  document.querySelectorAll('.admin-only').forEach(btn => btn.style.display = 'inline-block');
-              }
-          } catch { }
-      })();
+        async function respondToBooking(id, statusValue) {
+            try {
+                await apiRequest(`/guidebooking/${id}/status`, {
+                    method: 'PATCH',
+                    body: JSON.stringify(statusValue)
+                });
+                await loadGuideList('/guidebooking/incoming', 'incoming');
+            } catch (err) {
+                alert(err.message);
+            }
+        }
 
-      loadTab('expert-request');
+        // ---------------- Tab router ----------------
+        function loadTab(tab) {
+            switch (tab) {
+                case 'expert-request': return loadExpertRequestTab();
+                case 'expert-mine': return loadExpertList('/expertconsultation/mine', 'mine');
+                case 'expert-incoming': return loadExpertList('/expertconsultation/incoming', 'incoming');
+                case 'guide-request': return loadGuideRequestTab();
+                case 'guide-mine': return loadGuideList('/guidebooking/mine', 'mine');
+                case 'guide-incoming': return loadGuideList('/guidebooking/incoming', 'incoming');
+            }
+        }
 
-    
-  </script>
+        loadTab('expert-request');
+    </script>
 </body>
 </html>

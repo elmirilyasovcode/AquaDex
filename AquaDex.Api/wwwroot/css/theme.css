@@ -397,3 +397,167 @@ label {
         transform: translateY(0);
     }
 }
+
+/* ===== Shared entrance animations (works on any .card via data attribute, no per-page CSS needed) ===== */
+[data-animate] {
+    opacity: 0;
+    animation: cardEntrance 0.45s ease forwards;
+}
+
+@keyframes cardEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Universal card hover lift — opt-in via .lift class */
+.lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+    .lift:hover {
+        transform: translateY(-3px);
+        border-color: var(--accent);
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.2);
+    }
+
+/* ===== Loading skeleton (replaces plain "Loading..." text) ===== */
+.skeleton-line {
+    height: 14px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--card) 50%, var(--bg-elevated) 75%);
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.4s ease-in-out infinite;
+    margin-bottom: 10px;
+}
+
+    .skeleton-line.w-60 {
+        width: 60%;
+    }
+
+    .skeleton-line.w-80 {
+        width: 80%;
+    }
+
+    .skeleton-line.w-40 {
+        width: 40%;
+    }
+
+@keyframes skeletonShimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ===== Friendlier empty states ===== */
+.empty-state-rich {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+    .empty-state-rich .icon {
+        font-size: 2.2rem;
+        margin-bottom: 10px;
+        opacity: 0.6;
+    }
+
+    .empty-state-rich .title {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+    }
+
+    .empty-state-rich .sub {
+        font-size: 0.85rem;
+    }
+
+/* ===== Button loading state ===== */
+.btn.is-loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+}
+
+    .btn.is-loading::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 16px;
+        height: 16px;
+        margin: -8px 0 0 -8px;
+        border: 2px solid rgba(11, 30, 32, 0.3);
+        border-top-color: var(--bg);
+        border-radius: 50%;
+        animation: btnSpin 0.6s linear infinite;
+    }
+
+@keyframes btnSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===== Stat badge — small reusable pill for numbers ===== */
+.stat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    background: var(--bg-elevated);
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+    .stat-badge .stat-num {
+        color: var(--accent);
+        font-weight: 600;
+    }
+
+/* ===== Accordion (for future FAQ/collapsible content) ===== */
+.accordion-item {
+    border-bottom: 1px solid var(--border);
+}
+
+.accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+    .accordion-header .chevron {
+        transition: transform 0.25s ease;
+    }
+
+.accordion-item.open .chevron {
+    transform: rotate(180deg);
+}
+
+.accordion-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+}
+
+.accordion-item.open .accordion-body {
+    max-height: 300px;
+    padding-bottom: 14px;
+}

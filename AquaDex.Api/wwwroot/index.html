@@ -6,84 +6,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/theme.css">
     <style>
-        /* ===== Navbar upgrade ===== */
-        #site-header {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            transition: background 0.25s ease, box-shadow 0.25s ease, backdrop-filter 0.25s ease;
-        }
-
-            #site-header.scrolled {
-                background: rgba(16, 40, 43, 0.85);
-                backdrop-filter: blur(10px);
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-                border-bottom-color: transparent;
-            }
-
-        .logo-mark {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .logo-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--accent);
-            box-shadow: 0 0 8px var(--accent);
-            animation: livePulse 2s ease-in-out infinite;
-        }
-
-        @keyframes livePulse {
-            0%, 100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 0.5;
-                transform: scale(0.85);
-            }
-        }
-
-        .nav-links {
-            position: relative;
-        }
-
-        .nav-link {
-            position: relative;
-            transition: color 0.2s ease;
-        }
-
-            .nav-link::after {
-                content: "";
-                position: absolute;
-                left: 0;
-                right: 0;
-                bottom: -1px;
-                height: 2px;
-                background: var(--accent);
-                transform: scaleX(0);
-                transform-origin: left;
-                transition: transform 0.25s ease;
-            }
-
-            .nav-link:hover::after,
-            .nav-link.active::after {
-                transform: scaleX(1);
-            }
-
-            .nav-link.active {
-                border-bottom-color: transparent;
-            }
-
-        /* ===== Hero section ===== */
         .hero {
             position: relative;
             overflow: hidden;
-            padding: 72px 24px 64px;
+            padding: 72px 24px 56px;
             border-bottom: 1px solid var(--border);
         }
 
@@ -138,6 +64,18 @@
             animation: livePulse 1.8s ease-in-out infinite;
         }
 
+        @keyframes livePulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.85);
+            }
+        }
+
         .hero h1 {
             font-size: clamp(2.2rem, 5vw, 3.4rem);
             line-height: 1.1;
@@ -187,13 +125,65 @@
             margin-top: 28px;
             opacity: 0;
             animation: fadeUp 0.7s ease 0.46s forwards;
+            flex-wrap: wrap;
         }
 
-        /* ===== Feature strip ===== */
-        .feature-strip {
+        .stats-strip {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-tile {
+            text-align: center;
+            padding: 8px;
+        }
+
+        .stat-tile-num {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 2.1rem;
+            color: var(--accent);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-tile-label {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 4px;
+        }
+
+        .section-wrap {
             max-width: 1200px;
             margin: 0 auto;
             padding: 56px 24px;
+        }
+
+            .section-wrap.bordered {
+                border-bottom: 1px solid var(--border);
+            }
+
+        .section-head {
+            margin-bottom: 28px;
+        }
+
+            .section-head h2 {
+                font-size: 1.4rem;
+            }
+
+            .section-head p {
+                color: var(--text-secondary);
+                font-size: 0.92rem;
+                margin-top: 6px;
+            }
+
+        .feature-strip {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 16px;
@@ -235,7 +225,193 @@
             line-height: 1.5;
         }
 
-        /* generic button press feedback */
+        .steps-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            position: relative;
+        }
+
+        @media (max-width: 800px) {
+            .steps-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .step-item {
+            position: relative;
+        }
+
+        .step-num {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--card);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            font-family: var(--font-display);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+
+        .step-title {
+            font-family: var(--font-display);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .step-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .species-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        .species-preview-card {
+            padding: 16px;
+            text-align: center;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+            .species-preview-card:hover {
+                transform: translateY(-3px);
+                border-color: var(--accent);
+            }
+
+        .species-preview-icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .species-preview-name {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 0.88rem;
+        }
+
+        .species-preview-latin {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-top: 2px;
+        }
+
+        .see-more-card {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-style: dashed;
+        }
+
+        .highlight-card {
+            padding: 28px;
+            position: relative;
+        }
+
+        .highlight-quote-mark {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            color: var(--accent-soft);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .highlight-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .highlight-author {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .highlight-badge {
+            color: #4fd18a;
+            font-size: 0.72rem;
+            font-weight: 600;
+            background: rgba(79,209,138,0.12);
+            padding: 2px 8px;
+            border-radius: 8px;
+        }
+
+        .activity-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 800px) {
+            .activity-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 14px 16px;
+        }
+
+        .activity-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: var(--bg-elevated);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .activity-text {
+            font-size: 0.88rem;
+        }
+
+        .activity-time {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .closing-cta {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 64px 24px 80px;
+            text-align: center;
+        }
+
+            .closing-cta h2 {
+                font-size: 1.6rem;
+                margin-bottom: 12px;
+            }
+
+            .closing-cta p {
+                color: var(--text-secondary);
+                margin-bottom: 24px;
+                max-width: 480px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
         .btn {
             transition: transform 0.12s ease, background 0.15s ease, box-shadow 0.15s ease;
         }
@@ -277,27 +453,111 @@
         </div>
     </section>
 
-    <div class="feature-strip">
-        <div class="card feature-card">
-            <div class="feature-icon">🐟</div>
-            <div class="feature-title">Species Codex</div>
-            <div class="feature-desc">Every catch you log reveals another species in the databank — Subnautica-style discovery for real fisheries data.</div>
+    <div class="stats-strip" id="stats-strip">
+        <div class="stat-tile"><div class="skeleton-line w-40" style="margin: 0 auto;"></div></div>
+        <div class="stat-tile"><div class="skeleton-line w-40" style="margin: 0 auto;"></div></div>
+        <div class="stat-tile"><div class="skeleton-line w-40" style="margin: 0 auto;"></div></div>
+        <div class="stat-tile"><div class="skeleton-line w-40" style="margin: 0 auto;"></div></div>
+    </div>
+
+    <div class="section-wrap bordered">
+        <div class="section-head">
+            <h2>What you can do</h2>
+            <p>Six modules, one connected platform.</p>
         </div>
-        <div class="card feature-card">
-            <div class="feature-icon">📍</div>
-            <div class="feature-title">Field Reports</div>
-            <div class="feature-desc">Log catches with optional location privacy, report violations, and post live bite alerts near you.</div>
+        <div class="feature-strip">
+            <div class="card feature-card" data-animate style="animation-delay: 0.05s;">
+                <div class="feature-icon">🐟</div>
+                <div class="feature-title">Species Codex</div>
+                <div class="feature-desc">Every catch you log reveals another species in the databank — Subnautica-style discovery for real fisheries data.</div>
+            </div>
+            <div class="card feature-card" data-animate style="animation-delay: 0.1s;">
+                <div class="feature-icon">📍</div>
+                <div class="feature-title">Field Reports</div>
+                <div class="feature-desc">Log catches with optional location privacy, report violations, and post live bite alerts near you.</div>
+            </div>
+            <div class="card feature-card" data-animate style="animation-delay: 0.15s;">
+                <div class="feature-icon">💬</div>
+                <div class="feature-title">Community Forum</div>
+                <div class="feature-desc">Ask for help identifying a catch, discuss gear, and get live replies the moment someone answers.</div>
+            </div>
+            <div class="card feature-card" data-animate style="animation-delay: 0.2s;">
+                <div class="feature-icon">🏆</div>
+                <div class="feature-title">Points & Badges</div>
+                <div class="feature-desc">Earn points for every contribution and unlock badges as you complete the Codex.</div>
+            </div>
+            <div class="card feature-card" data-animate style="animation-delay: 0.25s;">
+                <div class="feature-icon">🧭</div>
+                <div class="feature-title">Expert & Guide Booking</div>
+                <div class="feature-desc">Ask a Verified Expert to identify a species, or book a local Fishing Guide for your next trip.</div>
+            </div>
+            <div class="card feature-card" data-animate style="animation-delay: 0.3s;">
+                <div class="feature-icon">🗺️</div>
+                <div class="feature-title">Waterbody Directory</div>
+                <div class="feature-desc">Browse known fishing locations with species abundance data contributed by Verified Experts.</div>
+            </div>
         </div>
-        <div class="card feature-card">
-            <div class="feature-icon">💬</div>
-            <div class="feature-title">Community Forum</div>
-            <div class="feature-desc">Ask for help identifying a catch, discuss gear, and get live replies the moment someone answers.</div>
+    </div>
+
+    <div class="section-wrap bordered">
+        <div class="section-head">
+            <h2>How it works</h2>
+            <p>From first cast to complete Codex in three steps.</p>
         </div>
-        <div class="card feature-card">
-            <div class="feature-icon">🏆</div>
-            <div class="feature-title">Points & Badges</div>
-            <div class="feature-desc">Earn points for every contribution and unlock badges as you complete the Codex.</div>
+        <div class="steps-row">
+            <div class="step-item" data-animate style="animation-delay: 0.05s;">
+                <div class="step-num">1</div>
+                <div class="step-title">Log your catch</div>
+                <div class="step-desc">Record species, weight, length, and location — with a privacy toggle so your honeyhole stays yours.</div>
+            </div>
+            <div class="step-item" data-animate style="animation-delay: 0.15s;">
+                <div class="step-num">2</div>
+                <div class="step-title">Watch your Codex fill in</div>
+                <div class="step-desc">Each new species you catch reveals itself in your personal databank — full data, real photos, conservation status.</div>
+            </div>
+            <div class="step-item" data-animate style="animation-delay: 0.25s;">
+                <div class="step-num">3</div>
+                <div class="step-title">Join the community</div>
+                <div class="step-desc">Ask questions in the Forum, earn points and badges, and help others identify their catch.</div>
+            </div>
         </div>
+    </div>
+
+    <div class="section-wrap bordered">
+        <div class="section-head">
+            <h2>From the Databank</h2>
+            <p>A glimpse of what's tracked — the full picture unlocks as you catch.</p>
+        </div>
+        <div class="species-preview-grid" id="species-preview-grid">
+            <div class="card species-preview-card"><div class="skeleton-line w-60" style="margin: 0 auto;"></div></div>
+            <div class="card species-preview-card"><div class="skeleton-line w-60" style="margin: 0 auto;"></div></div>
+            <div class="card species-preview-card"><div class="skeleton-line w-60" style="margin: 0 auto;"></div></div>
+        </div>
+    </div>
+
+    <div class="section-wrap bordered" id="highlight-section" style="display: none;">
+        <div class="section-head">
+            <h2>From the Community</h2>
+            <p>A top answer from the Forum, chosen by its own thread author.</p>
+        </div>
+        <div id="highlight-content"></div>
+    </div>
+
+    <div class="section-wrap">
+        <div class="section-head">
+            <h2>Recent Activity</h2>
+            <p>What the community's been up to.</p>
+        </div>
+        <div class="activity-grid" id="activity-grid">
+            <div class="card"><div class="skeleton-line w-80"></div><div class="skeleton-line w-40"></div></div>
+            <div class="card"><div class="skeleton-line w-80"></div><div class="skeleton-line w-40"></div></div>
+        </div>
+    </div>
+
+    <div class="closing-cta" id="closing-cta" style="display:none;">
+        <h2>Ready to start your Codex?</h2>
+        <p>Join AquaDex and start tracking your catches across Azerbaijan's waterways today.</p>
+        <a href="register.html" class="btn">Create Free Account</a>
     </div>
 
     <script src="js/api.js"></script>
@@ -305,21 +565,139 @@
     <script>
         renderHeader('index.html');
 
-                window.addEventListener('scroll', () => {
-            const header = document.getElementById('site-header');
-            if (window.scrollY > 12) header.classList.add('scrolled');
-            else header.classList.remove('scrolled');
-        });
-
         (async () => {
             const el = document.getElementById('welcome-msg');
             const ctaRow = document.getElementById('cta-row');
+            const closingCta = document.getElementById('closing-cta');
             try {
                 const user = await apiRequest('/auth/me');
                 el.innerHTML = `Authenticated as <strong>${user.displayName}</strong> <span style="color: var(--text-secondary);">(${user.roles.join(', ')})</span>`;
                 ctaRow.style.display = 'flex';
             } catch {
                 el.innerHTML = `Not authenticated. <a href="login.html">Sign in</a> or <a href="register.html">Register</a> to start logging catches.`;
+                closingCta.style.display = 'block';
+            }
+        })();
+
+        (async () => {
+            const stripEl = document.getElementById('stats-strip');
+            try {
+                const [species, catches, threads, leaderboard] = await Promise.all([
+                    apiRequest('/species'),
+                    apiRequest('/catchlog'),
+                    apiRequest('/forumthread?categoryId=1').catch(() => []),
+                    apiRequest('/points/leaderboard?days=365').catch(() => [])
+                ]);
+
+                const stats = [
+                    { num: species.length, label: 'Species Tracked' },
+                    { num: catches.length, label: 'Catches Logged' },
+                    { num: threads.length, label: 'Forum Discussions' },
+                    { num: leaderboard.length, label: 'Active Anglers' }
+                ];
+
+                stripEl.innerHTML = stats.map(s => `
+              <div class="stat-tile" data-animate>
+                <div class="stat-tile-num">${s.num}</div>
+                <div class="stat-tile-label">${s.label}</div>
+              </div>
+            `).join('');
+            } catch {
+                stripEl.innerHTML = `<div class="stat-tile" style="grid-column: 1 / -1; color: var(--text-secondary); font-size: 0.85rem;">Stats unavailable right now.</div>`;
+            }
+        })();
+
+        (async () => {
+            const gridEl = document.getElementById('species-preview-grid');
+            try {
+                const species = await apiRequest('/species');
+                const preview = species.slice(0, 5);
+
+                if (preview.length === 0) {
+                    gridEl.innerHTML = `<div class="card empty-state-rich" style="grid-column: 1 / -1;"><div class="icon">🐟</div><div class="title">Databank is empty</div><div class="sub">Verified Experts can add the first species entries.</div></div>`;
+                    return;
+                }
+
+                gridEl.innerHTML = preview.map((s, i) => `
+              <div class="card species-preview-card" data-animate style="animation-delay: ${i * 0.05}s;">
+                <div class="species-preview-icon">🐟</div>
+                <div class="species-preview-name">${s.commonNameEn}</div>
+                <div class="species-preview-latin">${s.latinName}</div>
+              </div>
+            `).join('') + (species.length > 5 ? `
+              <div class="card species-preview-card see-more-card" onclick="window.location.href='codex.html'" data-animate style="animation-delay: 0.25s;">
+                See all ${species.length} →
+              </div>
+            ` : '');
+            } catch {
+                gridEl.innerHTML = `<div class="card" style="grid-column: 1 / -1; color: var(--text-secondary); font-size: 0.85rem;">Databank preview unavailable right now.</div>`;
+            }
+        })();
+
+        (async () => {
+            const section = document.getElementById('highlight-section');
+            const contentEl = document.getElementById('highlight-content');
+            try {
+                const threads = await apiRequest('/forumthread?categoryId=1');
+                for (const t of threads) {
+                    if (t.replyCount === 0) continue;
+                    const detail = await apiRequest(`/forumthread/${t.id}`);
+                    const bestAnswer = detail.replies.find(r => r.isBestAnswer);
+                    if (bestAnswer) {
+                        contentEl.innerHTML = `
+                  <div class="card highlight-card" data-animate>
+                    <div class="highlight-quote-mark">"</div>
+                    <div class="highlight-text">${bestAnswer.body}</div>
+                    <div class="highlight-author">
+                      <span class="highlight-badge">✓ Best Answer</span>
+                      ${bestAnswer.authorDisplayName} · replying to "${detail.title}"
+                    </div>
+                  </div>
+                `;
+                        section.style.display = 'block';
+                        return;
+                    }
+                }
+            } catch {
+                // silently skip — nice-to-have, not core content
+            }
+        })();
+
+        (async () => {
+            const gridEl = document.getElementById('activity-grid');
+            try {
+                const [catches, threads] = await Promise.all([
+                    apiRequest('/catchlog'),
+                    apiRequest('/forumthread?categoryId=1').catch(() => [])
+                ]);
+
+                const recentCatches = catches.slice(0, 2).map(c => `
+              <div class="card activity-item">
+                <div class="activity-icon">🎣</div>
+                <div>
+                  <div class="activity-text"><strong>${c.userDisplayName}</strong> logged a <strong>${c.speciesCommonNameEn}</strong></div>
+                  <div class="activity-time">${new Date(c.caughtAt).toLocaleDateString('en-GB')}</div>
+                </div>
+              </div>
+            `);
+
+                const recentThreads = threads.slice(0, 2).map(t => `
+              <div class="card activity-item">
+                <div class="activity-icon">💬</div>
+                <div>
+                  <div class="activity-text"><strong>${t.authorDisplayName}</strong> started "${t.title}"</div>
+                  <div class="activity-time">${new Date(t.createdAt).toLocaleDateString('en-GB')}</div>
+                </div>
+              </div>
+            `);
+
+                const combined = [...recentCatches, ...recentThreads];
+
+                gridEl.innerHTML = combined.length > 0
+                    ? combined.join('')
+                    : `<div class="card empty-state-rich" style="grid-column: 1 / -1;"><div class="icon">🌊</div><div class="title">No activity yet</div><div class="sub">Be the first to log a catch or start a discussion.</div></div>`;
+            } catch {
+                gridEl.innerHTML = `<div class="card" style="grid-column: 1 / -1; color: var(--text-secondary); font-size: 0.85rem;">Activity feed unavailable right now.</div>`;
             }
         })();
     </script>

@@ -3,14 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <title>AquaDex — Register</title>
-    <link href="https:    <link rel="stylesheet" href="css/theme.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css">
+    <style>
+        .auth-wrap {
+            max-width: 420px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+
+        .auth-card {
+            padding: 32px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>AquaDex</h1>
-        <p class="subtitle">New Angler Registration</p>
+    <header id="site-header"></header>
 
-        <div class="hud-panel">
+    <div class="auth-wrap">
+        <div style="text-align: center; margin-bottom: 28px;">
+            <h1>AquaDex</h1>
+            <p class="subtitle" style="margin-bottom: 0;">New Angler Registration</p>
+        </div>
+
+        <div class="card auth-card" data-animate>
             <h2 style="font-size: 1.1rem; margin-bottom: 20px;">Create Account</h2>
 
             <div id="msg-container"></div>
@@ -28,40 +44,46 @@
                     <label for="password">Password</label>
                     <input type="password" id="password" required minlength="6">
                 </div>
-                <button type="submit" class="btn" style="width: 100%;">Register</button>
+                <button type="submit" id="submit-btn" class="btn" style="width: 100%;">Register</button>
             </form>
 
-            <p style="margin-top: 20px; font-size: 0.85rem; color: var(--text-dim);">
+            <p style="margin-top: 20px; font-size: 0.85rem; color: var(--text-secondary); text-align: center;">
                 Already registered? <a href="login.html">Sign in</a>
             </p>
         </div>
     </div>
 
     <script src="js/api.js"></script>
+    <script src="js/shared-header.js"></script>
     <script>
-    const form = document.getElementById('register-form');
-    const msgContainer = document.getElementById('msg-container');
+        renderHeader('register.html');
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      msgContainer.innerHTML = '';
+        const form = document.getElementById('register-form');
+        const msgContainer = document.getElementById('msg-container');
+        const submitBtn = document.getElementById('submit-btn');
 
-      const displayName = document.getElementById('displayName').value;
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            msgContainer.innerHTML = '';
+            submitBtn.classList.add('is-loading');
 
-      try {
-        const result = await apiRequest('/auth/register', {
-          method: 'POST',
-          body: JSON.stringify({ displayName, email, password })
+            const displayName = document.getElementById('displayName').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const result = await apiRequest('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ displayName, email, password })
+                });
+
+                msgContainer.innerHTML = `<div class="msg-box msg-success">Account created. Welcome, ${result.displayName}.</div>`;
+                setTimeout(() => { window.location.href = 'index.html'; }, 800);
+            } catch (err) {
+                submitBtn.classList.remove('is-loading');
+                msgContainer.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
+            }
         });
-
-        msgContainer.innerHTML = `<div class="msg-box msg-success">Account created. Welcome, ${result.displayName}.</div>`;
-        setTimeout(() => { window.location.href = 'index.html'; }, 800);
-      } catch (err) {
-        msgContainer.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
-      }
-    });
     </script>
 </body>
 </html>

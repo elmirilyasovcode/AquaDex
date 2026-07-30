@@ -5,12 +5,136 @@
     <title>AquaDex — Profile</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/theme.css">
+    <style>
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .avatar-circle {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-soft));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--bg);
+            flex-shrink: 0;
+        }
+
+        .profile-role-tags {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .profile-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 14px;
+            margin: 20px 0 28px;
+        }
+
+        .profile-stat {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 16px;
+            text-align: center;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+            .profile-stat:hover {
+                transform: translateY(-3px);
+                border-color: var(--accent);
+            }
+
+        .profile-stat-num {
+            font-family: var(--font-display);
+            font-size: 1.7rem;
+            color: var(--accent);
+        }
+
+        .profile-stat-label {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .badge-chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .badge-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            padding: 5px 12px;
+            border-radius: 16px;
+            transition: transform 0.15s ease;
+        }
+
+            .badge-chip:hover {
+                transform: scale(1.04);
+            }
+
+            .badge-chip.earned {
+                background: rgba(79,209,197,0.12);
+                color: var(--accent);
+                border: 1px solid var(--accent-soft);
+            }
+
+            .badge-chip.locked {
+                background: var(--bg-elevated);
+                color: var(--text-secondary);
+                border: 1px solid var(--border);
+            }
+
+        .section-heading {
+            font-size: 1rem;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .recent-catch-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+            .recent-catch-item:last-child {
+                border-bottom: none;
+            }
+    </style>
 </head>
 <body>
     <header id="site-header"></header>
     <div class="page-wrap">
         <div id="profile-content">
-            <p style="color: var(--text-secondary);">Loading profile...</p>
+            <div class="skeleton-line w-40" style="height: 28px; width: 220px;"></div>
+            <div class="skeleton-line w-60" style="height: 14px; margin-top: 8px;"></div>
+            <div class="profile-stat-grid" style="margin-top: 28px;">
+                <div class="card"><div class="skeleton-line w-40"></div><div class="skeleton-line w-60"></div></div>
+                <div class="card"><div class="skeleton-line w-40"></div><div class="skeleton-line w-60"></div></div>
+                <div class="card"><div class="skeleton-line w-40"></div><div class="skeleton-line w-60"></div></div>
+                <div class="card"><div class="skeleton-line w-40"></div><div class="skeleton-line w-60"></div></div>
+            </div>
         </div>
     </div>
 
@@ -19,20 +143,27 @@
     <script>
         renderHeader('profile.html');
 
+        function initials(name) {
+            return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+        }
+
         (async () => {
             const content = document.getElementById('profile-content');
 
-                        let user;
+            let user;
             try {
                 user = await apiRequest('/auth/me');
             } catch {
-                content.innerHTML = `<div class="msg-box msg-error">You must be logged in to view your profile. <a href="login.html">Sign in</a></div>`;
+                content.innerHTML = `
+              <div class="empty-state-rich card">
+                <div class="icon">🔒</div>
+                <div class="title">You must be logged in to view your profile</div>
+                <div class="sub"><a href="login.html">Sign in</a> to continue</div>
+              </div>`;
                 return;
             }
 
-                        let myCatches = [];
-            let discoveredIds = [];
-            let allSpecies = [];
+            let myCatches = [], discoveredIds = [], allSpecies = [];
             let pointsSummary = { totalPoints: 0, recentTransactions: [] };
             let badges = [];
             let loadErrors = [];
@@ -46,34 +177,43 @@
             const codexPercent = allSpecies.length > 0 ? Math.round((discoveredIds.length / allSpecies.length) * 100) : 0;
 
             content.innerHTML = `
-            <h1>${user.displayName}</h1>
-            <p class="subtitle">${user.roles.join(' · ')}</p>
+            <div class="profile-header" data-animate>
+              <div class="avatar-circle">${initials(user.displayName)}</div>
+              <div>
+                <h1 style="margin-bottom: 2px;">${user.displayName}</h1>
+                <div class="profile-role-tags">${user.roles.map(r => `<span class="stat-badge">${r}</span>`).join('')}</div>
+              </div>
+            </div>
 
             ${loadErrors.length > 0 ? `<div class="msg-box msg-error">Some data failed to load: ${loadErrors.join(' | ')}</div>` : ''}
 
             <div class="profile-stat-grid">
-              <div class="profile-stat"><div class="profile-stat-num">${myCatches.length}</div><div class="profile-stat-label">Total Catches</div></div>
-              <div class="profile-stat"><div class="profile-stat-num">${discoveredIds.length}</div><div class="profile-stat-label">Species Discovered</div></div>
-              <div class="profile-stat"><div class="profile-stat-num">${codexPercent}%</div><div class="profile-stat-label">Codex Complete</div></div>
-              <div class="profile-stat"><div class="profile-stat-num">${pointsSummary.totalPoints}</div><div class="profile-stat-label">Total Points</div></div>
+              <div class="profile-stat" data-animate style="animation-delay: 0.05s;"><div class="profile-stat-num">${myCatches.length}</div><div class="profile-stat-label">Total Catches</div></div>
+              <div class="profile-stat" data-animate style="animation-delay: 0.1s;"><div class="profile-stat-num">${discoveredIds.length}</div><div class="profile-stat-label">Species Discovered</div></div>
+              <div class="profile-stat" data-animate style="animation-delay: 0.15s;"><div class="profile-stat-num">${codexPercent}%</div><div class="profile-stat-label">Codex Complete</div></div>
+              <div class="profile-stat" data-animate style="animation-delay: 0.2s;"><div class="profile-stat-num">${pointsSummary.totalPoints}</div><div class="profile-stat-label">Total Points</div></div>
             </div>
 
-            <div class="card" style="margin-bottom: 20px;">
-              <h2 style="font-size: 1rem; margin-bottom: 14px;">Badges</h2>
-              <div>${badges.map(b => `<span class="chip${b.earned ? '' : ' warning'}">${b.earned ? '✓' : '🔒'} ${b.name}</span>`).join('') || '<span style="color: var(--text-secondary); font-size: 0.85rem;">No badge data.</span>'}</div>
-            </div>
-
-            <div class="card">
-              <h2 style="font-size: 1rem; margin-bottom: 14px;">Recent Catches</h2>
-              ${myCatches.length > 0 ? myCatches.slice(0, 5).map(c => `
-                <div class="list-item">
-                  <div class="list-item-title">${c.speciesCommonNameEn}</div>
-                  <div class="list-item-meta">
-                    ${c.weightKg ? `<span>${c.weightKg} kg</span>` : ''}
-                    <span>${new Date(c.caughtAt).toLocaleDateString('en-GB')}</span>
-                  </div>
+            <div class="card" style="margin-bottom: 20px;" data-animate style="animation-delay: 0.25s;">
+              <h2 class="section-heading">🏆 Badges</h2>
+              ${badges.length > 0 ? `
+                <div class="badge-chip-row">
+                  ${badges.map(b => `<span class="badge-chip ${b.earned ? 'earned' : 'locked'}" title="${b.description}">${b.earned ? '✓' : '🔒'} ${b.name}</span>`).join('')}
                 </div>
-              `).join('') : '<p style="color: var(--text-secondary); font-size: 0.85rem;">No catches logged yet.</p>'}
+              ` : `<div class="empty-state-rich"><div class="icon">🏅</div><div class="title">No badges yet</div><div class="sub">Log catches and contribute to the community to earn your first badge.</div></div>`}
+            </div>
+
+            <div class="card" data-animate style="animation-delay: 0.3s;">
+              <h2 class="section-heading">🎣 Recent Catches</h2>
+              ${myCatches.length > 0 ? myCatches.slice(0, 5).map(c => `
+                <div class="recent-catch-item">
+                  <div>
+                    <div style="font-weight: 600;">${c.speciesCommonNameEn}</div>
+                    <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px;">${new Date(c.caughtAt).toLocaleDateString('en-GB')}</div>
+                  </div>
+                  ${c.weightKg ? `<span class="stat-badge">${c.weightKg} <span class="stat-num">kg</span></span>` : ''}
+                </div>
+              `).join('') : `<div class="empty-state-rich"><div class="icon">🎣</div><div class="title">No catches logged yet</div><div class="sub"><a href="catches.html">Log your first catch</a> to start building your Codex.</div></div>`}
             </div>
           `;
         })();

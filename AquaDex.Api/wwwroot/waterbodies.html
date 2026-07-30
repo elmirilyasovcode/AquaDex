@@ -6,28 +6,57 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/theme.css">
     <style>
+        .wb-hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+
+        .wb-filter-row {
+            display: flex;
+            gap: 8px;
+            margin: 20px 0 24px;
+            flex-wrap: wrap;
+        }
+
+        .region-chip {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            transition: border-color 0.15s, color 0.15s;
+        }
+
+            .region-chip.active, .region-chip:hover {
+                border-color: var(--accent);
+                color: var(--accent);
+            }
+
         .wb-card {
-            opacity: 0;
-            animation: wbIn 0.45s ease forwards;
             transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
-        @keyframes wbIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
+            .wb-card:hover {
+                transform: translateY(-4px);
+                border-color: var(--accent);
+                box-shadow: 0 10px 28px rgba(0,0,0,0.2);
             }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .wb-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 4px;
         }
 
-        .wb-card:hover {
-            transform: translateY(-4px);
-            border-color: var(--accent);
-            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
+        .wb-type-icon {
+            font-size: 1.4rem;
         }
 
         .wb-name {
@@ -48,7 +77,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 0;
+            padding: 9px 0;
             border-bottom: 1px solid var(--border);
             font-size: 0.87rem;
         }
@@ -73,16 +102,35 @@
                 .abundance-bar span.filled {
                     background: var(--accent);
                 }
+
+        .wb-species-count-badge {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            background: var(--bg-elevated);
+            padding: 3px 9px;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
     <header id="site-header"></header>
     <div class="page-wrap">
-        <h1>Waterbodies</h1>
-        <p class="subtitle">Known fishing locations</p>
+        <div class="wb-hero">
+            <div>
+                <h1>Waterbodies</h1>
+                <p class="subtitle" style="margin-bottom: 0;">Known fishing locations across Azerbaijan</p>
+            </div>
+        </div>
+
+        <div class="wb-filter-row" id="region-filters"></div>
 
         <div id="msg-container"></div>
-        <div id="waterbody-grid" class="card-grid"></div>
+        <div id="waterbody-grid" class="card-grid">
+            <div class="card"><div class="skeleton-line w-60"></div><div class="skeleton-line w-40"></div><div class="skeleton-line w-80"></div></div>
+            <div class="card"><div class="skeleton-line w-60"></div><div class="skeleton-line w-40"></div><div class="skeleton-line w-80"></div></div>
+            <div class="card"><div class="skeleton-line w-60"></div><div class="skeleton-line w-40"></div><div class="skeleton-line w-80"></div></div>
+        </div>
 
         <div id="add-waterbody-section" style="display:none; margin-top: 32px; max-width: 480px;">
             <div class="card">
@@ -95,7 +143,7 @@
                         <select id="wbType"><option value="0">Sea</option><option value="1">River</option><option value="2">Reservoir</option><option value="3">Farm</option></select>
                     </div>
                     <div class="field-group"><label for="wbRegion">Region</label><input type="text" id="wbRegion" required></div>
-                    <button type="submit" class="btn">Add Waterbody</button>
+                    <button type="submit" id="wb-submit-btn" class="btn">Add Waterbody</button>
                 </form>
             </div>
         </div>
@@ -106,39 +154,88 @@
     <script>
         renderHeader('waterbodies.html');
 
+        const TYPE_ICONS = { 0: '🌊', 1: '🏞️', 2: '🪣', 3: '🐟' };
+        let allWaterbodies = [];
+        let currentRegionFilter = 'all';
+
         function abundanceBar(rating) {
             let bars = '';
             for (let i = 1; i <= 5; i++) bars += `<span class="${i <= rating ? 'filled' : ''}"></span>`;
             return `<div class="abundance-bar">${bars}</div>`;
         }
 
-        (async () => {
+        function renderRegionFilters(waterbodies) {
+            const regions = [...new Set(waterbodies.map(w => w.region))];
+            const filterEl = document.getElementById('region-filters');
+            filterEl.innerHTML = `<button class="region-chip active" data-region="all">All Regions</button>` +
+                regions.map(r => `<button class="region-chip" data-region="${r}">${r}</button>`).join('');
+
+            filterEl.querySelectorAll('.region-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    filterEl.querySelectorAll('.region-chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    currentRegionFilter = chip.dataset.region;
+                    renderCards();
+                });
+            });
+        }
+
+        async function renderCards() {
             const grid = document.getElementById('waterbody-grid');
+            const filtered = currentRegionFilter === 'all'
+                ? allWaterbodies
+                : allWaterbodies.filter(w => w.region === currentRegionFilter);
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="empty-state-rich card" style="grid-column: 1 / -1;"><div class="icon">🗺️</div><div class="title">No waterbodies here</div><div class="sub">Try a different region filter.</div></div>`;
+                return;
+            }
+
+            const cards = await Promise.all(filtered.map(async (wb, i) => {
+                let speciesLinks = [];
+                try { speciesLinks = await apiRequest(`/specieswaterbody/by-waterbody/${wb.id}`); } catch { }
+
+                const speciesHtml = speciesLinks.length > 0
+                    ? speciesLinks.map(link => `
+                  <div class="wb-species-row">
+                    <span>${link.speciesCommonNameEn}</span>
+                    ${abundanceBar(link.abundanceRating)}
+                  </div>
+                `).join('')
+                    : `<p style="color: var(--text-secondary); font-size: 0.82rem; padding: 8px 0;">No species data recorded yet.</p>`;
+
+                return `
+              <div class="card wb-card" data-animate style="animation-delay: ${Math.min(i * 0.06, 0.4)}s;">
+                <div class="wb-card-head">
+                  <div class="wb-type-icon">${TYPE_ICONS[wb.type] ?? '🌊'}</div>
+                  <span class="wb-species-count-badge">${speciesLinks.length} species</span>
+                </div>
+                <div class="wb-name">${wb.name}</div>
+                <div class="wb-region">${wb.region}</div>
+                ${speciesHtml}
+              </div>
+            `;
+            }));
+
+            grid.innerHTML = cards.join('');
+        }
+
+        (async () => {
             const msgContainer = document.getElementById('msg-container');
             try {
-                const waterbodies = await apiRequest('/waterbody');
-                const cards = await Promise.all(waterbodies.map(async (wb, i) => {
-                    let speciesLinks = [];
-                    try { speciesLinks = await apiRequest(`/specieswaterbody/by-waterbody/${wb.id}`); } catch { }
+                allWaterbodies = await apiRequest('/waterbody');
 
-                    const speciesHtml = speciesLinks.length > 0
-                        ? speciesLinks.map(link => `
-                    <div class="wb-species-row">
-                      <span>${link.speciesCommonNameEn}</span>
-                      ${abundanceBar(link.abundanceRating)}
-                    </div>
-                  `).join('')
-                        : `<p style="color: var(--text-secondary); font-size: 0.82rem;">No species data recorded yet.</p>`;
-
-                    return `
-                <div class="card wb-card" style="animation-delay: ${Math.min(i * 0.06, 0.4)}s;">
-                  <div class="wb-name">${wb.name}</div>
-                  <div class="wb-region">${wb.region}</div>
-                  ${speciesHtml}
-                </div>
-              `;
-                }));
-                grid.innerHTML = cards.join('');
+                if (allWaterbodies.length === 0) {
+                    document.getElementById('waterbody-grid').innerHTML = `
+                <div class="empty-state-rich card" style="grid-column: 1 / -1;">
+                  <div class="icon">🗺️</div>
+                  <div class="title">No waterbodies recorded yet</div>
+                  <div class="sub">Verified Experts can add the first location.</div>
+                </div>`;
+                } else {
+                    renderRegionFilters(allWaterbodies);
+                    await renderCards();
+                }
             } catch (err) {
                 msgContainer.innerHTML = `<div class="msg-box msg-error">Failed to load waterbodies: ${err.message}</div>`;
             }
@@ -154,6 +251,8 @@
         document.getElementById('wb-form')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const msg = document.getElementById('wb-msg');
+            const submitBtn = document.getElementById('wb-submit-btn');
+            submitBtn.classList.add('is-loading');
             try {
                 await apiRequest('/waterbody', {
                     method: 'POST',
@@ -167,6 +266,7 @@
                 document.getElementById('wb-form').reset();
                 setTimeout(() => location.reload(), 800);
             } catch (err) {
+                submitBtn.classList.remove('is-loading');
                 msg.innerHTML = `<div class="msg-box msg-error">${err.message}</div>`;
             }
         });
